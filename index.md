@@ -23,7 +23,7 @@
 ![bb29d030ea9b482c2727a165cac2cd6](https://user-images.githubusercontent.com/117433909/201537520-28fa68ce-15bd-43b6-bd12-fd4b9a129940.jpg)
 ![cfebac23cd49dcabb7bbfa3d57c2035](https://user-images.githubusercontent.com/117433909/201537525-2dea4be8-789e-419d-b89c-4a0b401e9661.jpg)
 
-- <最后来谈谈最喜欢的爱好吧——数学
+- <最后来谈谈最喜欢的爱好吧——**数学**  
 数学水平不高，菜还爱学，但一直保持着热爱！喜欢数学的朋友也可以来找我交流呀
 
 ## 联系方式：都可以来做朋友呀
