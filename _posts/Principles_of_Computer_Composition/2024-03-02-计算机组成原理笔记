@@ -1,7 +1,13 @@
-# 计算机组成原理笔记
+---
+layout: mypost
+title: 计算机组成原理笔记
+categories: [复习]
+---
 
+# 计算机组成原理笔记
 > *The magic you are looking for is in the work you're avoiding.*
 > *你在寻找的奇迹就隐藏在你一直逃避的行动里*
+
 ## 第一章 计算机系统概论
 
 ### 计算机的性能指标
