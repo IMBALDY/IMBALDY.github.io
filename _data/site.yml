@@ -1,8 +1,8 @@
 # valine
 valine_app_id: "xhxHWspVHrRE30VXrP2lRwKL-gzGzoHsz"
 valine_app_key: "RkaItIEXBV9vOTBf3OYqnf9i"
-valine_common_place_holder: "替换为一般占位符"
-valine_micro_place_holder: "替换为微博客用占位符"
+valine_common_place_holder: "请输入你的评论…"
+valine_micro_place_holder: "快速发布你的看法…"
 
 # footer, html code
 footer: 
