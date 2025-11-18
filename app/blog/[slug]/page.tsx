@@ -96,9 +96,9 @@ export default function BlogPost({ params }: { params: { slug: string } }) {
                 mdxOptions: {
                   remarkPlugins: [remarkGfm, remarkMath],
                   rehypePlugins: [
-                    rehypeKatex,
+                    rehypeKatex as any,
                     [
-                      rehypePrettyCode,
+                      rehypePrettyCode as any,
                       {
                         theme: "github-dark",
                         keepBackground: true,

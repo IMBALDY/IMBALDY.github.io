@@ -18,9 +18,9 @@ export default function SearchBar() {
     // Load blog posts
     fetch("/api/search")
       .then((res) => res.json())
-      .then((data) => {
+      .then((data: BlogPost[]) => {
         setPosts(data);
-        const fuseInstance = new Fuse(data, {
+        const fuseInstance = new Fuse<BlogPost>(data, {
           keys: ["title", "description", "content"],
           threshold: 0.3,
           includeScore: true,

@@ -70,7 +70,7 @@ export default function Home() {
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:underline"
                 >
-                  <GraduationCap size={20} />
+                  <ExternalLink size={20} />
                   <span>Scholar</span>
                 </a>
               )}

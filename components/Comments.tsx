@@ -29,7 +29,7 @@ export default function Comments() {
 
   return (
     <Giscus
-      repo={giscusConfig.repo}
+      repo={giscusConfig.repo as `${string}/${string}`}
       repoId={giscusConfig.repoId}
       category={giscusConfig.category}
       categoryId={giscusConfig.categoryId}
