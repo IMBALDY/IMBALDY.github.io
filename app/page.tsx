@@ -3,7 +3,6 @@ import {
   Mail, 
   Github, 
   ExternalLink,
-  GraduationCap,
   Briefcase,
   FileText 
 } from "lucide-react";
@@ -124,22 +123,13 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Education Section */}
-      <section className="mb-16">
-        <h2 className="text-3xl font-serif font-bold mb-8 flex items-center gap-3">
-          <GraduationCap className="text-blue-600 dark:text-blue-400" />
-          Education
-        </h2>
-        <Timeline items={personalInfo.education} />
-      </section>
-
-      {/* Experience Section */}
+      {/* Education & Experience Section */}
       <section className="mb-16">
         <h2 className="text-3xl font-serif font-bold mb-8 flex items-center gap-3">
           <Briefcase className="text-blue-600 dark:text-blue-400" />
-          Experience
+          Education & Experience
         </h2>
-        <Timeline items={personalInfo.experience} />
+        <Timeline items={[...personalInfo.education, ...personalInfo.experience]} />
       </section>
 
       {/* Publications Section */}
