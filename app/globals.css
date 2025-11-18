@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import "katex/dist/katex.min.css";
+
+@layer base {
+  :root {
+    --font-sans: "Inter", system-ui, sans-serif;
+    --font-serif: "Crimson Text", Georgia, serif;
+  }
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Code block styling */
+pre {
+  @apply rounded-lg overflow-x-auto p-4 my-4;
+}
+
+code {
+  @apply text-sm bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded;
+}
+
+pre code {
+  @apply bg-transparent p-0;
+}
+
+/* KaTeX styling */
+.katex {
+  font-size: 1.1em;
+}
+
+.katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
