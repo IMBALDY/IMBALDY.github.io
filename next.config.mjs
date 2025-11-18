@@ -7,7 +7,6 @@ import rehypePrettyCode from "rehype-pretty-code";
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'export',
-  basePath: '/homepage',
   images: {
     unoptimized: true,
   },
