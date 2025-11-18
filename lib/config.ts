@@ -18,7 +18,7 @@ export const personalInfo: PersonalInfo = {
       organization: "CVML (Computer Vision & Machine Learning) Lab, National University of Singapore",
       period: "2025 - Present",
       location: "Singapore",
-      description: "Working under the supervision of Prof. Angela Yao and Dr. Junbin Xiao (Postdoctoral Research Fellow) on video understanding, long-term memory, and world models. Conducting research on temporal reasoning and visual learning in computer vision systems.",
+      description: "Working under the supervision of Prof. Angela Yao and Dr. Junbin Xiao (Postdoctoral Research Fellow) on streaming video understanding.",
     },
     {
       title: "Non-Graduating Non-Exchanging Programme (NGNE)",
