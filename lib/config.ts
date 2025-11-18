@@ -14,6 +14,13 @@ export const personalInfo: PersonalInfo = {
   
   education: [
     {
+      title: "Research Intern",
+      organization: "CVML (Computer Vision & Machine Learning) Lab, National University of Singapore",
+      period: "2025 - Present",
+      location: "Singapore",
+      description: "Working under the supervision of Prof. Angela Yao and Dr. Junbin Xiao (Postdoctoral Research Fellow) on video understanding, long-term memory, and world models. Conducting research on temporal reasoning and visual learning in computer vision systems.",
+    },
+    {
       title: "Non-Graduating Non-Exchanging Programme (NGNE)",
       organization: "National University of Singapore",
       period: "July 2025 - Present",
@@ -36,22 +43,7 @@ export const personalInfo: PersonalInfo = {
     },
   ],
   
-  experience: [
-    {
-      title: "Research Intern",
-      organization: "CVML (Computer Vision & Machine Learning) Lab, National University of Singapore",
-      period: "2025 - Present",
-      location: "Singapore",
-      description: "Working under the supervision of Prof. Angela Yao and Dr. Junbin Xiao (Postdoctoral Research Fellow) on video understanding, long-term memory, and world models. Conducting research on temporal reasoning and visual learning in computer vision systems.",
-    },
-    {
-      title: "Undergraduate Student",
-      organization: "School of Computer Science, Beijing University of Posts and Telecommunications",
-      period: "2022 - 2026",
-      location: "Beijing, China",
-      description: "Pursuing Bachelor's degree in Data Science and Big Data Technology with focus on machine learning and computer vision.",
-    },
-  ],
+  experience: [],
   
   publications: [
     {
