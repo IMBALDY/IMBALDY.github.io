@@ -8,7 +8,6 @@ import {
   FileText 
 } from "lucide-react";
 import Timeline from "@/components/Timeline";
-import VisitorMap from "@/components/VisitorMap";
 import { personalInfo } from "@/lib/config";
 
 export default function Home() {
@@ -238,11 +237,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Visitor Map Section */}
-      <section className="mb-16">
-        <h2 className="text-3xl font-serif font-bold mb-8">Visitors</h2>
-        <VisitorMap />
-      </section>
     </div>
   );
 }
