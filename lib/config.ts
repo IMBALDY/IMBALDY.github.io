@@ -3,7 +3,7 @@ import { PersonalInfo } from "./types";
 export const personalInfo: PersonalInfo = {
   name: "Chen Jiajun",
   title: "Research Intern @ NUS CVML Lab | Seeking PhD Opportunities",
-  email: "chenjiajun@u.nus.edu",
+  email: "chen.jiajun@u.nus.edu",
   github: "https://github.com/IMBALDY",
   orcid: "https://orcid.org/0009-0009-7541-4025",
   scholar: "https://scholar.google.com/citations?hl=en&user=YC84QYkAAAAJ&view_op=list_works&gmla=AKzYXQ0MKv8Snw23G5jeWGomo7pVImO9sbULiJERYO2usYyJOrE1DORYrobXxwpohHZzCqK6j2UOjzIbcU7Fy3RM",
