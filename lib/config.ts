@@ -6,7 +6,7 @@ export const personalInfo: PersonalInfo = {
   email: "chenjiajun@u.nus.edu",
   github: "https://github.com/IMBALDY",
   orcid: "https://orcid.org/0009-0009-7541-4025",
-  scholar: "",
+  scholar: "https://scholar.google.com/citations?hl=en&user=YC84QYkAAAAJ&view_op=list_works&gmla=AKzYXQ0MKv8Snw23G5jeWGomo7pVImO9sbULiJERYO2usYyJOrE1DORYrobXxwpohHZzCqK6j2UOjzIbcU7Fy3RM",
   bluesky: "https://bsky.app/profile/chenjiajun.bsky.social",
   openreview: "https://openreview.net/profile?id=~Jiajun_Chen10",
   bio: "I am a research intern at the Computer Vision and Machine Learning (CVML) Lab at National University of Singapore, working under the supervision of Prof. Angela Yao and Dr. Junbin Xiao (Postdoctoral Research Fellow). My research interests lie in video understanding, long-term memory, and world models. I am actively seeking PhD opportunities to further explore these areas and contribute to advancing artificial intelligence through innovative approaches to temporal reasoning and visual learning.",
