@@ -22,12 +22,15 @@ docker compose down
 | --- | --- |
 | Name, bio, avatar, social links, and site URL | `_config.yml` |
 | Homepage and research experience | `_pages/about.md` |
-| CV | `_pages/cv.md` |
 | Publications | `_publications/` |
 | Profile image and other assets | `images/` |
 
 To add a publication, copy an existing Markdown file in `_publications/`, update its front matter, and restart the local server only if you modify `_config.yml`.
 
+## Add a blog later
+
+When you are ready, add posts as Markdown files in `_posts/` with names such as `2026-07-27-my-first-post.md`, create a blog archive page, and add a `Blog` link to `_data/navigation.yml`. The existing Jekyll setup will generate the posts automatically.
+
 ## Publishing
 
-After the local review is approved, configure GitHub Pages for `IMBALDY/IMBALDY.github.io` and publish the `main` branch. The website URL is configured as `https://imbaldy.github.io` in `_config.yml`.
+Pushes to the `main` branch automatically build and deploy the website to GitHub Pages at `https://imbaldy.github.io`.
