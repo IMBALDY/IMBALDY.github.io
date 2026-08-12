@@ -1,36 +1,35 @@
-# Jiajun Chen
+# Jiajun Chen — Academic Homepage
 
-Personal academic website based on [Academic Pages](https://academicpages.github.io/).
+A custom Astro academic homepage with Git-backed content managed through Pages CMS.
 
 ## Local preview
 
-Docker is the recommended local environment because it keeps Ruby and Jekyll versions consistent.
-
 ```bash
-docker compose up -d --build
+npm install
+npm run dev
 ```
 
-Open [http://localhost:4000](http://localhost:4000). The server watches content files and refreshes the site after edits. Stop it with:
+Open the local URL printed by Astro. Production validation:
 
 ```bash
-docker compose down
+npm run build
 ```
 
-## Content management
+## Visual content editing
 
-| Content | File or directory |
-| --- | --- |
-| Name, bio, avatar, social links, and site URL | `_config.yml` |
-| Homepage and research experience | `_pages/about.md` |
-| Publications | `_publications/` |
-| Profile image and other assets | `images/` |
+The `.pages.yml` file configures Chinese-labeled forms for:
 
-To add a publication, copy an existing Markdown file in `_publications/`, update its front matter, and restart the local server only if you modify `_config.yml`.
+- Profile, avatar, and personal links
+- Publications
+- Projects
+- Writing posts, categories, tags, drafts, and media
 
-## Add a blog later
+Publication thumbnails are optional, while projects require a cover image. The profile form also controls how many combined Selected Projects cards appear before the automatic “Show all” button.
 
-When you are ready, add posts as Markdown files in `_posts/` with names such as `2026-07-27-my-first-post.md`, create a blog archive page, and add a `Blog` link to `_data/navigation.yml`. The existing Jekyll setup will generate the posts automatically.
+After this branch is pushed to GitHub, install the Pages CMS GitHub App and open the repository from [app.pagescms.org](https://app.pagescms.org/). Pages CMS edits the files under `src/content/` and uploads media under `public/images/`.
 
-## Publishing
+Demo posts are marked `Demo` in their frontmatter and can be deleted from Pages CMS.
 
-Pushes to the `main` branch automatically build and deploy the website to GitHub Pages at `https://imbaldy.github.io`.
+## Deployment
+
+This local redesign does not replace the current online site until it is explicitly committed and pushed. The included GitHub Pages workflow already uses Astro's official deployment action and will activate only after the changes are pushed.

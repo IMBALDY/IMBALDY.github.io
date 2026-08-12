@@ -1,0 +1,118 @@
+---
+import type { CollectionEntry } from "astro:content";
+
+interface Props {
+  publications: CollectionEntry<"publication">[];
+  projects: CollectionEntry<"project">[];
+  limit?: number;
+}
+
+const { publications, projects, limit = 6 } = Astro.props;
+const items = [
+  ...publications.map((entry) => ({ kind: "publication" as const, entry })),
+  ...projects.map((entry) => ({ kind: "project" as const, entry })),
+].sort((first, second) =>
+  second.entry.data.year - first.entry.data.year
+  || second.entry.data.order - first.entry.data.order
+  || (first.kind === "publication" ? -1 : 1),
+);
+
+const getVenueMark = (venue: string, category: string) =>
+  venue.match(/\(([^)]+)\)\s*$/)?.[1] ?? category.slice(0, 4).toUpperCase();
+---
+
+<div class="selected-grid" data-progressive-list data-limit={limit} data-kind="selected-projects">
+  {items.map((item, index) => {
+    if (item.kind === "publication") {
+      const { data } = item.entry;
+      return (
+        <article class="selected-card" data-list-item>
+          <div class="selected-visual publication-visual" data-accent={index % 2 === 0 ? "red" : "green"}>
+            {data.image ? (
+              <img src={data.image} alt={data.imageAlt} width="540" height="300" loading="lazy" />
+            ) : (
+              <div class="publication-placeholder" aria-hidden="true">
+                <strong>{getVenueMark(data.venue, data.category)}</strong>
+                <span>{data.year}</span>
+              </div>
+            )}
+          </div>
+          <div class="selected-body">
+            <div class="selected-topline">
+              <span class="publication-event">
+                {data.year} {data.venue.match(/\(([^)]+)\)\s*$/)?.[1] ?? data.category}
+              </span>
+              <span class={`status status-${data.status.toLowerCase()}`}>{data.status}</span>
+              {data.presentation && <span class="presentation-type">{data.presentation}</span>}
+            </div>
+            <h3>{data.title}</h3>
+            <p class="authors">
+              {data.authors.map((author, authorIndex) => (
+                <>
+                  {authorIndex > 0 && ", "}
+                  <span class={author === "Jiajun Chen" ? "self-author" : undefined}>
+                    {author}{data.equalContribution && authorIndex < 2 ? "*" : ""}
+                  </span>
+                </>
+              ))}
+            </p>
+            <p class="venue">{data.venue}</p>
+            {(data.equalContribution || data.firstAuthor) && (
+              <p class="contribution-note">
+                {data.equalContribution ? "* Equal contribution" : "First author"}
+              </p>
+            )}
+            {(data.paper || data.code || data.project) && (
+              <div class="selected-links" aria-label={`Links for ${data.title}`}>
+                {data.paper && <a href={data.paper} target="_blank" rel="noopener noreferrer">Paper ↗</a>}
+                {data.code && <a href={data.code} target="_blank" rel="noopener noreferrer">Code ↗</a>}
+                {data.project && <a href={data.project} target="_blank" rel="noopener noreferrer">Website ↗</a>}
+              </div>
+            )}
+          </div>
+        </article>
+      );
+    }
+
+    const { data } = item.entry;
+    return (
+      <article class="selected-card" data-list-item>
+        <div class="selected-visual project-visual" data-accent={index % 2 === 0 ? "red" : "green"}>
+          <img src={data.image} alt={data.imageAlt} width="540" height="300" loading="lazy" />
+        </div>
+        <div class="selected-body">
+          <div class="selected-topline">
+            <span>{data.year}</span>
+            <span>{data.status}</span>
+          </div>
+          <h3>{data.title}</h3>
+          <p>{data.summary}</p>
+          <div class="tag-row" aria-label="Project tags">
+            {data.tags.map((tag) => <span>{tag}</span>)}
+          </div>
+          {(data.website || data.code || data.paper) && (
+            <div class="selected-links">
+              {data.website && <a href={data.website} target="_blank" rel="noopener noreferrer">Website ↗</a>}
+              {data.code && <a href={data.code} target="_blank" rel="noopener noreferrer">Code ↗</a>}
+              {data.paper && <a href={data.paper} target="_blank" rel="noopener noreferrer">Paper ↗</a>}
+            </div>
+          )}
+        </div>
+      </article>
+    );
+  })}
+
+  <div class="list-toggle-row selected-list-toggle">
+    <button
+      type="button"
+      class="list-toggle"
+      data-list-toggle
+      data-show-label={`Show all ${items.length} selected projects`}
+      data-hide-label="Show fewer projects"
+      aria-expanded="false"
+      hidden
+    >
+      Show all {items.length} selected projects
+    </button>
+  </div>
+</div>

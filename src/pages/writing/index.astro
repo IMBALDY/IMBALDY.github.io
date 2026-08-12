@@ -1,0 +1,22 @@
+---
+import WritingList from "../../components/WritingList.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getWriting } from "../../lib/content";
+
+const posts = await getWriting();
+---
+
+<BaseLayout
+  title="Writing"
+  description="Research notes, essays, and technical writing by Jiajun Chen."
+  active="writing"
+>
+  <section class="page-hero shell writing-hero">
+    <p class="eyebrow">Ideas in motion</p>
+    <h1>Writing</h1>
+    <p>Research notes, technical explorations, and essays on how intelligent systems remember and reason over time.</p>
+  </section>
+  <section class="shell writing-section">
+    <WritingList posts={posts} filters />
+  </section>
+</BaseLayout>

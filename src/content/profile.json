@@ -1,0 +1,22 @@
+{
+  "name": "Jiajun Chen",
+  "role": "Research Intern @ NUS CVML Lab",
+  "affiliation": "National University of Singapore",
+  "location": "Singapore",
+  "avatar": "/images/profile.jpg",
+  "avatarAlt": "Portrait of Jiajun Chen",
+  "intro": [
+    "I am a final-year undergraduate studying Data Science and Big Data Technology at Beijing University of Posts and Telecommunications. During my senior year, I am visiting the National University of Singapore through its Non-Graduating Non-Exchanging Programme.",
+    "At NUS, I work as a research intern at the Computer Vision and Machine Learning Lab, advised by Prof. Angela Yao and Dr. Junbin Xiao. I am seeking PhD opportunities in video understanding, long-term memory, and world models."
+  ],
+  "interests": ["Video understanding", "Long-term memory", "World models"],
+  "selectedProjectsLimit": 6,
+  "links": {
+    "email": "chen.jiajun@u.nus.edu",
+    "scholar": "https://scholar.google.com/citations?hl=en&user=YC84QYkAAAAJ&view_op=list_works&gmla=AKzYXQ0MKv8Snw23G5jeWGomo7pVImO9sbULiJERYO2usYyJOrE1DORYrobXxwpohHZzCqK6j2UOjzIbcU7Fy3RM",
+    "github": "https://github.com/IMBALDY",
+    "orcid": "https://orcid.org/0009-0009-7541-4025",
+    "openreview": "https://openreview.net/profile?id=~Jiajun_Chen10",
+    "bluesky": "https://bsky.app/profile/chenjiajun.bsky.social"
+  }
+}

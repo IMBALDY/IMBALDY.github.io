@@ -1,0 +1,189 @@
+media:
+  - name: images
+    label: 图片
+    input: public/images
+    output: /images
+    categories: [image]
+  - name: documents
+    label: 文档
+    input: public/files
+    output: /files
+    categories: [document]
+
+content:
+  - name: profile
+    label: 个人资料
+    type: file
+    path: src/content/profile.json
+    format: json
+    operations: { create: false, rename: false, delete: false }
+    fields:
+      - { name: name, label: 姓名, type: string, required: true }
+      - { name: role, label: 当前身份, type: string, required: true }
+      - { name: affiliation, label: 学校或机构, type: string, required: true }
+      - { name: location, label: 所在地, type: string, required: true }
+      - name: avatar
+        label: 头像
+        type: image
+        required: true
+        options: { media: images, path: public/images, rename: true }
+      - { name: avatarAlt, label: 头像替代文字, type: string, required: true }
+      - name: intro
+        label: 个人简介（两段）
+        type: text
+        list: { min: 2, max: 2 }
+        required: true
+      - name: interests
+        label: 研究方向
+        type: string
+        list: true
+        required: true
+      - name: selectedProjectsLimit
+        label: 首页默认显示 Selected Projects 数量
+        type: number
+        default: 6
+        required: true
+        options: { min: 1 }
+      - name: links
+        label: 个人链接
+        type: object
+        required: true
+        fields:
+          - { name: email, label: 邮箱, type: string, required: true }
+          - { name: scholar, label: Google Scholar, type: string, required: true }
+          - { name: github, label: GitHub, type: string, required: true }
+          - { name: orcid, label: ORCID, type: string, required: true }
+          - { name: openreview, label: OpenReview, type: string, required: true }
+          - { name: bluesky, label: Bluesky, type: string, required: true }
+
+  - name: publications
+    label: 论文
+    type: collection
+    path: src/content/publications
+    format: yaml-frontmatter
+    filename: "{primary}.md"
+    view:
+      primary: title
+      fields: [title, year, venue, status]
+      sort: [year, order, title]
+      default: { sort: year, order: desc }
+    fields:
+      - { name: title, label: 标题, type: string, required: true }
+      - { name: year, label: 年份, type: number, required: true }
+      - { name: order, label: 同年排序, type: number, default: 0 }
+      - { name: authors, label: 作者（按顺序）, type: string, list: true, required: true }
+      - { name: equalContribution, label: 前两位共同一作, type: boolean, default: false }
+      - { name: firstAuthor, label: 本人为第一作者, type: boolean, default: false }
+      - { name: venue, label: 会议或期刊, type: string, required: true }
+      - name: category
+        label: 类型
+        type: select
+        required: true
+        options: { values: [Conference, Journal, Preprint] }
+      - name: status
+        label: 状态
+        type: select
+        required: true
+        options: { values: [Published, Accepted, Submitted, Preprint] }
+      - name: presentation
+        label: 展示形式
+        type: select
+        options: { values: [Poster, Oral, Spotlight] }
+      - name: image
+        label: 论文缩略图（可选）
+        type: image
+        description: 可上传论文首页、方法图或项目视觉图；不上传时网站显示统一占位图。
+        options: { media: images, path: public/images/publications, rename: true }
+      - { name: imageAlt, label: 论文图片替代文字, type: string }
+      - { name: paper, label: 论文链接, type: string }
+      - { name: code, label: 代码链接, type: string }
+      - { name: project, label: 项目主页链接, type: string }
+
+  - name: projects
+    label: 项目
+    type: collection
+    path: src/content/projects
+    format: yaml-frontmatter
+    filename: "{primary}.md"
+    view:
+      primary: title
+      fields: [title, year, status]
+      sort: [year, order, title]
+      default: { sort: year, order: desc }
+    fields:
+      - { name: title, label: 项目名称, type: string, required: true }
+      - { name: summary, label: 简介, type: text, required: true }
+      - { name: year, label: 年份, type: number, required: true }
+      - { name: order, label: 同年排序, type: number, default: 0 }
+      - name: image
+        label: 封面图
+        type: image
+        required: true
+        options: { media: images, path: public/images/projects, rename: true }
+      - { name: imageAlt, label: 图片替代文字, type: string, required: true }
+      - { name: tags, label: 标签, type: string, list: true }
+      - name: status
+        label: 状态
+        type: select
+        required: true
+        options: { values: [Active, Completed, Demo] }
+      - { name: website, label: 项目主页, type: string }
+      - { name: code, label: 代码链接, type: string }
+      - { name: paper, label: 论文链接, type: string }
+
+  - name: writing
+    label: Writing 文章
+    type: collection
+    path: src/content/writing
+    format: yaml-frontmatter
+    filename:
+      template: "{primary}.md"
+      field: create
+    view:
+      primary: title
+      fields: [title, date, category, draft]
+      sort: [date, title]
+      search: [title, summary, tags]
+      default: { sort: date, order: desc }
+    fields:
+      - { name: title, label: 标题, type: string, required: true }
+      - { name: summary, label: 摘要, type: text, required: true }
+      - name: date
+        label: 发布日期
+        type: date
+        required: true
+        options: { format: yyyy-MM-dd }
+      - name: updated
+        label: 更新日期
+        type: date
+        default: ""
+        options: { format: yyyy-MM-dd }
+      - name: category
+        label: 分类
+        type: select
+        required: true
+        options: { values: [Blog, Essay, Notes] }
+      - { name: tags, label: 标签, type: string, list: true }
+      - { name: draft, label: 草稿, type: boolean, default: false }
+      - { name: demo, label: 演示内容, type: boolean, default: false }
+      - name: cover
+        label: 封面图
+        type: image
+        options: { media: images, path: public/images/writing, rename: true }
+      - { name: coverAlt, label: 封面替代文字, type: string }
+      - name: body
+        label: 正文
+        type: rich-text
+        required: true
+        options: { media: images, path: public/images/writing, rename: true, switcher: true }
+
+settings:
+  content:
+    merge: true
+  commit:
+    identity: user
+    templates:
+      create: "content: 新建 {path}"
+      update: "content: 更新 {path}"
+      delete: "content: 删除 {path}"
+      rename: "content: 重命名 {oldPath} -> {newPath}"

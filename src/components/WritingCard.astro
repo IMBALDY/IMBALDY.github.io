@@ -1,0 +1,37 @@
+---
+import type { CollectionEntry } from "astro:content";
+import { estimateReadingTime, formatDate, slugify } from "../lib/content";
+
+interface Props {
+  post: CollectionEntry<"writing">;
+}
+
+const { post } = Astro.props;
+const minutes = estimateReadingTime(post.body);
+---
+
+<article
+  class="writing-card"
+  data-writing-card
+  data-category={slugify(post.data.category)}
+  data-tags={post.data.tags.map(slugify).join(" ")}
+>
+  <div class="writing-card-topline">
+    <a class="category-label" href={`/writing/category/${slugify(post.data.category)}/`}>
+      {post.data.category}
+    </a>
+    {post.data.demo && <span class="demo-label">Demo</span>}
+    {post.data.draft && <span class="draft-label">Local draft</span>}
+  </div>
+  <h2><a href={`/writing/${post.id}/`}>{post.data.title}</a></h2>
+  <p>{post.data.summary}</p>
+  <div class="writing-meta">
+    <time datetime={post.data.date.toISOString()}>{formatDate(post.data.date)}</time>
+    <span>{minutes} min read</span>
+  </div>
+  <div class="tag-row" aria-label="Article tags">
+    {post.data.tags.map((tag) => (
+      <a href={`/writing/tag/${slugify(tag)}/`}>#{tag}</a>
+    ))}
+  </div>
+</article>

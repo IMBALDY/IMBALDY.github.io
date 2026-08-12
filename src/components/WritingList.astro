@@ -1,0 +1,79 @@
+---
+import type { CollectionEntry } from "astro:content";
+import { slugify } from "../lib/content";
+import WritingCard from "./WritingCard.astro";
+
+interface Props {
+  posts: CollectionEntry<"writing">[];
+  filters?: boolean;
+}
+
+const { posts, filters = false } = Astro.props;
+const categories = ["Blog", "Essay", "Notes"];
+const tags = [...new Set(posts.flatMap((post) => post.data.tags))].sort();
+---
+
+{filters && (
+  <div class="writing-filters" data-writing-filters>
+    <div class="filter-group" aria-label="Filter by category">
+      <span class="filter-title">Type</span>
+      <button type="button" class="filter-button is-active" data-filter-kind="all" data-filter-value="all">All</button>
+      {categories.map((category) => (
+        <button type="button" class="filter-button" data-filter-kind="category" data-filter-value={slugify(category)}>
+          {category}
+        </button>
+      ))}
+    </div>
+    <div class="filter-group" aria-label="Filter by tag">
+      <span class="filter-title">Tags</span>
+      {tags.map((tag) => (
+        <button type="button" class="filter-button" data-filter-kind="tag" data-filter-value={slugify(tag)}>
+          {tag}
+        </button>
+      ))}
+    </div>
+    <p class="filter-result" aria-live="polite" data-filter-result>{posts.length} entries</p>
+  </div>
+)}
+
+<div class="writing-list" data-writing-list>
+  {posts.map((post) => <WritingCard post={post} />)}
+</div>
+
+{filters && (
+  <script>
+    const filterRoot = document.querySelector("[data-writing-filters]");
+    const cards = [...document.querySelectorAll("[data-writing-card]")];
+    const result = document.querySelector("[data-filter-result]");
+
+    if (filterRoot && result) {
+      const buttons = [...filterRoot.querySelectorAll("[data-filter-kind]")];
+      let selectedKind = "all";
+      let selectedValue = "all";
+
+      const applyFilter = () => {
+        let visible = 0;
+        cards.forEach((card) => {
+          const category = card.getAttribute("data-category") ?? "";
+          const tags = (card.getAttribute("data-tags") ?? "").split(" ");
+          const matches = selectedKind === "all"
+            || (selectedKind === "category" && category === selectedValue)
+            || (selectedKind === "tag" && tags.includes(selectedValue));
+          card.toggleAttribute("hidden", !matches);
+          if (matches) visible += 1;
+        });
+        result.textContent = `${visible} ${visible === 1 ? "entry" : "entries"}`;
+      };
+
+      buttons.forEach((button) => {
+        button.addEventListener("click", () => {
+          selectedKind = button.getAttribute("data-filter-kind") ?? "all";
+          selectedValue = button.getAttribute("data-filter-value") ?? "all";
+          buttons.forEach((item) => item.classList.remove("is-active"));
+          button.classList.add("is-active");
+          applyFilter();
+        });
+      });
+    }
+  </script>
+)}

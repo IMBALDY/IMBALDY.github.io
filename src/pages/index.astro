@@ -1,0 +1,85 @@
+---
+import ExternalLink from "../components/ExternalLink.astro";
+import SelectedProjects from "../components/SelectedProjects.astro";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { getProfile, getProjects, getPublications } from "../lib/content";
+
+const [profile, publications, projects] = await Promise.all([
+  getProfile(),
+  getPublications(),
+  getProjects(),
+]);
+---
+
+<BaseLayout active="home">
+  <section class="hero shell">
+    <div class="portrait-frame">
+      <img src={profile.avatar} alt={profile.avatarAlt} width="492" height="478" />
+      <span class="availability-dot" aria-label="Open to PhD opportunities"></span>
+    </div>
+    <div class="hero-copy">
+      <p class="eyebrow">Hello, I’m</p>
+      <h1>{profile.name}</h1>
+      <p class="hero-role">{profile.role}</p>
+      <div class="hero-intro">
+        {profile.intro.map((paragraph) => <p>{paragraph}</p>)}
+      </div>
+      <div class="interest-row" aria-label="Research interests">
+        {profile.interests.map((interest) => <span>{interest}</span>)}
+      </div>
+      <div class="profile-meta">
+        <span>{profile.affiliation}</span>
+        <span>{profile.location}</span>
+      </div>
+      <div class="profile-links" aria-label="Profile links">
+        <a class="external-link primary-link" href={`mailto:${profile.links.email}`}>
+          <span>Email</span><span aria-hidden="true">↗</span>
+        </a>
+        <ExternalLink href={profile.links.scholar} label="Google Scholar" />
+        <ExternalLink href={profile.links.github} label="GitHub" />
+        <ExternalLink href={profile.links.orcid} label="ORCID" />
+        <ExternalLink href={profile.links.openreview} label="OpenReview" />
+        <ExternalLink href={profile.links.bluesky} label="Bluesky" />
+      </div>
+    </div>
+  </section>
+
+  <section class="content-section shell" id="selected-projects">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">Research portfolio</p>
+        <h2>Selected Projects</h2>
+      </div>
+      <p>Selected publications, research systems, and ongoing experiments.</p>
+    </div>
+    <SelectedProjects
+      publications={publications}
+      projects={projects}
+      limit={profile.selectedProjectsLimit}
+    />
+  </section>
+
+  <script>
+    document.querySelectorAll<HTMLElement>("[data-progressive-list]").forEach((list) => {
+      const limit = Number(list.dataset.limit ?? 0);
+      const items = [...list.querySelectorAll<HTMLElement>("[data-list-item]")];
+      const toggle = list.querySelector<HTMLButtonElement>("[data-list-toggle]");
+
+      if (!toggle || items.length <= limit) return;
+
+      const setExpanded = (expanded: boolean) => {
+        items.slice(limit).forEach((item) => item.toggleAttribute("hidden", !expanded));
+        toggle.setAttribute("aria-expanded", String(expanded));
+        toggle.textContent = expanded
+          ? toggle.dataset.hideLabel ?? "Show fewer"
+          : toggle.dataset.showLabel ?? "Show all";
+      };
+
+      toggle.hidden = false;
+      setExpanded(false);
+      toggle.addEventListener("click", () => {
+        setExpanded(toggle.getAttribute("aria-expanded") !== "true");
+      });
+    });
+  </script>
+</BaseLayout>

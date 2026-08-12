@@ -1,0 +1,72 @@
+---
+import "@fontsource-variable/inter";
+import "@fontsource-variable/newsreader";
+import "../styles/global.css";
+
+interface Props {
+  title?: string;
+  description?: string;
+  active?: "home" | "writing";
+  image?: string | undefined;
+  type?: "website" | "article";
+}
+
+const {
+  title = "Jiajun Chen",
+  description = "Research homepage of Jiajun Chen — video understanding, long-term memory, and world models.",
+  active = "home",
+  image = "/images/og-card.png",
+  type = "website",
+} = Astro.props;
+
+const pageTitle = title === "Jiajun Chen" ? title : `${title} · Jiajun Chen`;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const socialImage = new URL(image || "/images/og-card.png", Astro.site);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#f7f6f2" />
+    <meta property="og:type" content={type} />
+    <meta property="og:site_name" content="Jiajun Chen" />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={socialImage} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={socialImage} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="canonical" href={canonical} />
+    <title>{pageTitle}</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <header class="site-header">
+      <nav class="nav-shell" aria-label="Primary navigation">
+        <a class="wordmark" href="/" aria-label="Jiajun Chen home">
+          <span>JC</span>
+          <span class="wordmark-name">Jiajun Chen</span>
+        </a>
+        <div class="nav-links">
+          <a href="/" aria-current={active === "home" ? "page" : undefined}>Home</a>
+          <a href="/writing/" aria-current={active === "writing" ? "page" : undefined}>Writing</a>
+        </div>
+      </nav>
+    </header>
+    <main id="main-content">
+      <slot />
+    </main>
+    <footer class="site-footer">
+      <div class="shell footer-inner">
+        <p>© {new Date().getFullYear()} Jiajun Chen</p>
+        <p>Built for careful research and occasional notes.</p>
+      </div>
+    </footer>
+  </body>
+</html>

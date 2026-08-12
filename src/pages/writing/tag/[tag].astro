@@ -1,0 +1,33 @@
+---
+import type { CollectionEntry } from "astro:content";
+import WritingList from "../../../components/WritingList.astro";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import { getWriting, slugify } from "../../../lib/content";
+
+export async function getStaticPaths() {
+  const posts = await getWriting();
+  const tags = [...new Set(posts.flatMap((post) => post.data.tags))];
+  return tags.map((tag) => ({
+    params: { tag: slugify(tag) },
+    props: { tag, posts: posts.filter((post) => post.data.tags.includes(tag)) },
+  }));
+}
+
+interface Props {
+  tag: string;
+  posts: CollectionEntry<"writing">[];
+}
+
+const { tag, posts } = Astro.props;
+---
+
+<BaseLayout title={`#${tag}`} active="writing">
+  <section class="page-hero shell compact-hero">
+    <p class="eyebrow">Writing tag</p>
+    <h1>#{tag}</h1>
+    <p>{posts.length} {posts.length === 1 ? "entry" : "entries"} with this tag.</p>
+  </section>
+  <section class="shell writing-section">
+    <WritingList posts={posts} />
+  </section>
+</BaseLayout>
