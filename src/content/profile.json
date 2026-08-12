@@ -6,13 +6,18 @@
   "avatar": "/images/profile.jpg",
   "avatarAlt": "Portrait of Jiajun Chen",
   "intro": [
-    "I am a final-year undergraduate studying Data Science and Big Data Technology at Beijing University of Posts and Telecommunications. During my senior year, I am visiting the National University of Singapore through its Non-Graduating Non-Exchanging Programme.",
-    "At NUS, I work as a research intern at the Computer Vision and Machine Learning Lab, advised by Prof. Angela Yao and Dr. Junbin Xiao. I am seeking PhD opportunities in video understanding, long-term memory, and world models."
+    "I have finished my bachelor's degress majoring in Data Science and Big Data Technology at Beijing University of Posts and Telecommunications. During my senior year, I visited the National University of Singapore and worked as a research intern at CVML Lab, advised by Prof. Angela Yao and Prof. Junbin Xiao.",
+    "Now, I am a research intern under the guidance of Prof. Xihui Liu at HKU MMLab, where I focus on embodied AI, ego video generation and game world models. Plus, I'm open and delighted to seek an Industry Internship Opportunity and research collaboration. If you are interested in my work and want to have a communication with me, feel free to contact me through email! 🥰"
   ],
-  "interests": ["Video understanding", "Long-term memory", "World models"],
+  "interests": [
+    "Video generation & understanding",
+    "World model",
+    "Embodied AI",
+    "Long-term memory"
+  ],
   "selectedProjectsLimit": 6,
   "links": {
-    "email": "chen.jiajun@u.nus.edu",
+    "email": "chenjiajun@bupt.edu.cn",
     "scholar": "https://scholar.google.com/citations?hl=en&user=YC84QYkAAAAJ&view_op=list_works&gmla=AKzYXQ0MKv8Snw23G5jeWGomo7pVImO9sbULiJERYO2usYyJOrE1DORYrobXxwpohHZzCqK6j2UOjzIbcU7Fy3RM",
     "github": "https://github.com/IMBALDY",
     "orcid": "https://orcid.org/0009-0009-7541-4025",
