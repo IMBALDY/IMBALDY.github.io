@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-labelledby="title">
+  <title id="title">Cartoon pirate anchor</title>
+  <g fill="none" stroke="#a7283e" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="60" cy="20" r="10"/>
+    <path d="M60 31v58M38 48h44M24 68c2 24 16 37 36 37s34-13 36-37M24 68l-10 9M96 68l10 9"/>
+  </g>
+  <path d="M50 91h20l-10 14-10-14Z" fill="#267054"/>
+</svg>

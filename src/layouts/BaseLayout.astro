@@ -22,6 +22,7 @@ const {
 const pageTitle = title === "Jiajun Chen" ? title : `${title} · Jiajun Chen`;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 const socialImage = new URL(image || "/images/og-card.png", Astro.site);
+const themeColor = active === "writing" ? "#eaf4ec" : "#f0f6f1";
 ---
 
 <!doctype html>
@@ -30,7 +31,7 @@ const socialImage = new URL(image || "/images/og-card.png", Astro.site);
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
     <meta name="description" content={description} />
-    <meta name="theme-color" content="#f7f6f2" />
+    <meta name="theme-color" content={themeColor} />
     <meta property="og:type" content={type} />
     <meta property="og:site_name" content="Jiajun Chen" />
     <meta property="og:title" content={pageTitle} />
@@ -45,7 +46,7 @@ const socialImage = new URL(image || "/images/og-card.png", Astro.site);
     <link rel="canonical" href={canonical} />
     <title>{pageTitle}</title>
   </head>
-  <body>
+  <body class:list={{ "home-page": active === "home", "writing-page": active === "writing" }}>
     <a class="skip-link" href="#main-content">Skip to content</a>
     <header class="site-header">
       <nav class="nav-shell" aria-label="Primary navigation">

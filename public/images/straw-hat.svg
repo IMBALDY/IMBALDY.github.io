@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 180" role="img" aria-labelledby="title">
+  <title id="title">Cartoon straw hat with a red band</title>
+  <g fill="none" stroke="#3a2a20" stroke-linecap="round" stroke-linejoin="round">
+    <path fill="#e6c36a" stroke-width="6" d="M55 112c12-44 34-73 75-73 40 0 64 30 76 73-43 13-105 14-151 0Z"/>
+    <path fill="#cf3147" stroke-width="5" d="M65 91c37 10 91 10 130 0l8 24c-45 12-100 13-145 1l7-25Z"/>
+    <path fill="#f0d47f" stroke-width="6" d="M19 113c26 15 65 22 111 22s85-7 111-22c8 13 2 26-13 34-25 13-59 20-98 20s-73-7-98-20c-15-8-21-21-13-34Z"/>
+    <path stroke="#b69143" stroke-width="3" d="M42 130c24 12 53 18 88 18s64-6 88-18M84 58c12 7 81 7 94 0M77 72c24 7 79 7 106 0"/>
+    <path stroke="#f8e6a8" stroke-width="3" d="M40 119c18 7 38 11 59 13M159 132c22-2 42-6 61-13"/>
+  </g>
+</svg>

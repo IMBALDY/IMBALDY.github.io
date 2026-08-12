@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-labelledby="title">
+  <title id="title">Red and green pirate compass</title>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="60" cy="60" r="47" stroke="#267054" stroke-width="5"/>
+    <circle cx="60" cy="60" r="34" stroke="#267054" stroke-width="2" stroke-dasharray="3 7"/>
+    <path d="m60 20 11 31 29 9-29 9-11 31-11-31-29-9 29-9 11-31Z" fill="#f7fbf7" stroke="#a7283e" stroke-width="4"/>
+    <path d="m60 28 7 27-7 5-7-5 7-27Z" fill="#a7283e" stroke="none"/>
+    <circle cx="60" cy="60" r="5" fill="#267054" stroke="none"/>
+  </g>
+</svg>
