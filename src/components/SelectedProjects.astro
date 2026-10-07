@@ -40,7 +40,7 @@ const getVenueMark = (venue: string, category: string) =>
           <div class="selected-body">
             <div class="selected-topline">
               <span class="publication-event">
-                {data.year} {data.venue.match(/\(([^)]+)\)\s*$/)?.[1] ?? data.category}
+                {data.year} {data.category !== "Preprint" && (data.venue.match(/\(([^)]+)\)\s*$/)?.[1] ?? data.category)}
               </span>
               <span class={`status status-${data.status.toLowerCase()}`}>{data.status}</span>
               {data.presentation && <span class="presentation-type">{data.presentation}</span>}
@@ -66,7 +66,7 @@ const getVenueMark = (venue: string, category: string) =>
               <div class="selected-links" aria-label={`Links for ${data.title}`}>
                 {data.paper && <a href={data.paper} target="_blank" rel="noopener noreferrer">Paper ↗</a>}
                 {data.code && <a href={data.code} target="_blank" rel="noopener noreferrer">Code ↗</a>}
-                {data.project && <a href={data.project} target="_blank" rel="noopener noreferrer">Website ↗</a>}
+                {data.project && <a href={data.project} target="_blank" rel="noopener noreferrer">Page ↗</a>}
               </div>
             )}
           </div>
