@@ -13,5 +13,6 @@ status: Preprint
 image: /images/publications/recursive-game-creator-framework.png
 imageAlt: Recursive Game Creator workflow connecting Designer, Builder, Player, and Reviewer through iterative game development
 paper: https://arxiv.org/abs/2610.08621
+code: https://github.com/IMBALDY/RecursiveGameCreator
 project: https://imbaldy.github.io/recursive-game-creator/
 ---
