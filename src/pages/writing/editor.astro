@@ -37,7 +37,7 @@ const bundledPostsJson = JSON.stringify(bundledPosts).replace(/</g, "\\u003c");
     <header class="studio-header">
       <div class="studio-title-row">
         <div>
-          <p class="eyebrow">Direct Web Publishing · Kexue.fm Style</p>
+          <p class="eyebrow">Direct Web Publishing</p>
           <h1>Writing Studio</h1>
         </div>
         <div class="studio-top-actions">
@@ -151,7 +151,7 @@ const bundledPostsJson = JSON.stringify(bundledPosts).replace(/</g, "\\u003c");
     <div class="studio-workspace">
       <div class="studio-pane studio-editor-pane">
         <div class="studio-pane-header">
-          <span>Markdown + LaTeX 源码（支持直接粘贴截图上传）</span>
+          <span>Markdown + LaTeX 源码（支持粘贴截图上传）</span>
           <span id="editor-word-count">0 words</span>
         </div>
         <textarea
@@ -163,7 +163,7 @@ const bundledPostsJson = JSON.stringify(bundledPosts).replace(/</g, "\\u003c");
 
       <div class="studio-pane studio-preview-pane">
         <div class="studio-pane-header">
-          <span>实时渲染预览（科学空间 MathJax 3 引擎）</span>
+          <span>实时渲染预览</span>
           <div class="studio-preview-controls">
             <button
               type="button"
@@ -959,13 +959,13 @@ const bundledPostsJson = JSON.stringify(bundledPosts).replace(/</g, "\\u003c");
     // Demo Template Button
     const DEMO_TEMPLATE = {
       title: "从多粒度 KV 缓存压缩看流式视频理解的信息瓶颈与世界模型记忆机制",
-      slug: "kexue-math-derivation-demo",
+      slug: "multi-grained-kv-cache-compression-notes",
       category: "Notes",
       tags: "Video Understanding, KV Cache, World Model, Information Bottleneck, Math",
-      summary: "参考科学空间（kexue.fm）长文推导风格，系统推导长时程流式视频问答与世界模型中的率失真下界、Lipschitz 注意力近似误差、状态空间递归演化以及多粒度混合缓存的最优分配律。",
+      summary: "系统推导长时程流式视频问答与世界模型中的率失真下界、Lipschitz 注意力近似误差、状态空间递归演化以及多粒度混合缓存的最优分配律。",
       body: `在长时程流式视频理解（Streaming Video QA）与交互式游戏世界模型（Interactive World Models）中，随着时间步 $t \\to \\infty$，原始视觉 Token 序列 $\\bm{X}_{1:t} = (\\bm{x}_1, \\bm{x}_2, \\dots, \\bm{x}_t)$ 的键值缓存（KV Cache）呈线性甚至超线性增长。如何在有限显存预算 $B \\ll N_t$ 下保留对未来预测与跨时序推理最关键的记忆状态，是构建长程具身智能体的核心数学问题。
 
-本文采用「科学空间」式的自底向上推导风格，从**率失真理论（Rate-Distortion Theory）**与**矩阵扰动分析**出发，完整推导多粒度 KV 缓存压缩的理论误差界与最优分配律。
+本文从**率失真理论（Rate-Distortion Theory）**与**矩阵扰动分析**出发，完整推导多粒度 KV 缓存压缩的理论误差界与最优分配律。
 
 ---
 
