@@ -12,9 +12,16 @@ const posts = await getWriting();
   active="writing"
 >
   <section class="page-hero shell writing-hero">
-    <p class="eyebrow">Ideas in motion</p>
-    <h1>Writing</h1>
-    <p>Research notes, technical explorations, and essays on how intelligent systems remember and reason over time.</p>
+    <div class="writing-hero-top">
+      <div>
+        <p class="eyebrow">Ideas in motion</p>
+        <h1>Writing</h1>
+        <p>Research notes, technical explorations, and essays on how intelligent systems remember and reason over time.</p>
+      </div>
+      <a class="studio-launch-btn" href="/writing/editor/">
+        <span>✎ Writing Studio</span>
+      </a>
+    </div>
   </section>
   <section class="shell writing-section">
     <WritingList posts={posts} filters />

@@ -1,0 +1,1207 @@
+---
+import MathJaxLoader from "../../components/MathJaxLoader.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getWriting } from "../../lib/content";
+
+const posts = await getWriting();
+const bundledPosts = Object.fromEntries(
+  posts.map((post) => [
+    `src/content/writing/${post.id}.md`,
+    {
+      slug: post.id,
+      name: `${post.id}.md`,
+      path: `src/content/writing/${post.id}.md`,
+      title: post.data.title,
+      summary: post.data.summary,
+      date: post.data.date.toISOString().slice(0, 10),
+      category: post.data.category,
+      tags: post.data.tags,
+      body: post.body ?? "",
+    },
+  ]),
+);
+const bundledPostsJson = JSON.stringify(bundledPosts).replace(/</g, "\\u003c");
+---
+
+<BaseLayout
+  title="Writing Studio"
+  description="Online Markdown + MathJax live editor for publishing directly to imbaldy.github.io."
+  active="writing"
+>
+  <MathJaxLoader />
+  <!-- Load Marked.js for client-side Markdown rendering (after math protection) -->
+  <script is:inline src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script is:inline id="bundled-posts-data" type="application/json" set:html={bundledPostsJson}></script>
+
+  <section class="studio-shell shell">
+    <header class="studio-header">
+      <div class="studio-title-row">
+        <div>
+          <p class="eyebrow">Direct Web Publishing · Kexue.fm Style</p>
+          <h1>Writing Studio</h1>
+        </div>
+        <div class="studio-top-actions">
+          <a class="studio-back-link" href="/writing/">← Back to Writing</a>
+          <button type="button" id="btn-token-config" class="studio-btn studio-btn-ghost">
+            🔑 <span id="token-status-label">GitHub Token</span>
+          </button>
+          <button type="button" id="btn-download-md" class="studio-btn studio-btn-ghost">
+            ⬇ Download .md
+          </button>
+          <button type="button" id="btn-save-draft" class="studio-btn studio-btn-secondary">
+            Save Draft
+          </button>
+          <button type="button" id="btn-publish" class="studio-btn studio-btn-primary">
+            🚀 Publish to .io
+          </button>
+        </div>
+      </div>
+
+      <!-- Token settings panel (collapsible) -->
+      <div id="token-panel" class="studio-token-panel" hidden>
+        <div class="studio-token-inner">
+          <div>
+            <strong>GitHub 直连发布配置（仅保存在你当前浏览器的 LocalStorage 中）</strong>
+            <p>
+              前往 <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener noreferrer">GitHub Fine-grained Tokens ↗</a> 创建一个 Token：Repository 选择 <code>IMBALDY/IMBALDY.github.io</code>，Repository permissions 中将 <strong>Contents</strong> 设为 <code>Read and write</code>。
+            </p>
+          </div>
+          <div class="studio-token-input-row">
+            <input
+              type="password"
+              id="input-github-token"
+              placeholder="粘贴 github_pat_... 或 ghp_..."
+              autocomplete="off"
+            />
+            <button type="button" id="btn-save-token" class="studio-btn studio-btn-primary">Save Token</button>
+            <button type="button" id="btn-clear-token" class="studio-btn studio-btn-ghost">Clear</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Status notification bar -->
+      <div id="studio-status" class="studio-status" hidden></div>
+
+      <!-- Post selector & Frontmatter controls -->
+      <div class="studio-meta-card">
+        <div class="studio-file-bar">
+          <div class="studio-file-select-group">
+            <label for="select-existing-post">文章列表：</label>
+            <select id="select-existing-post">
+              <option value="__new__">＋ 新建文章 (New Post)</option>
+            </select>
+            <button type="button" id="btn-refresh-list" class="studio-btn studio-btn-small" title="从 GitHub 刷新文章列表">↻ 刷新</button>
+            <button type="button" id="btn-load-demo" class="studio-btn studio-btn-small">填入公式推导模板</button>
+          </div>
+          <button type="button" id="btn-delete-post" class="studio-btn studio-btn-danger studio-btn-small" hidden>
+            🗑 删除此文章
+          </button>
+        </div>
+
+        <div class="studio-meta-grid">
+          <label class="studio-field studio-field-wide">
+            <span>标题 (Title) *</span>
+            <input type="text" id="meta-title" placeholder="例如：从能量视角理解世界模型中的长程记忆机制" />
+          </label>
+          <label class="studio-field">
+            <span>URL 路径名 (Slug / 文件名) *</span>
+            <input type="text" id="meta-slug" placeholder="例如：energy-view-of-world-models" />
+          </label>
+          <label class="studio-field">
+            <span>分类 (Category)</span>
+            <select id="meta-category">
+              <option value="Notes">Notes (研究笔记)</option>
+              <option value="Blog">Blog (技术博客)</option>
+              <option value="Essay">Essay (随笔综述)</option>
+            </select>
+          </label>
+          <label class="studio-field">
+            <span>发布日期 (Date)</span>
+            <input type="date" id="meta-date" />
+          </label>
+          <label class="studio-field">
+            <span>标签 (Tags，用逗号分隔)</span>
+            <input type="text" id="meta-tags" placeholder="World Model, Video Generation, Math" />
+          </label>
+          <label class="studio-field studio-field-full">
+            <span>文章摘要 (Summary) *</span>
+            <input type="text" id="meta-summary" placeholder="显示在列表页与分享卡片中的简短摘要..." />
+          </label>
+        </div>
+      </div>
+    </header>
+
+    <!-- Quick insert scientific toolbar -->
+    <div class="studio-toolbar" aria-label="Markdown & LaTeX quick insert toolbar">
+      <span class="studio-toolbar-label">快捷插入：</span>
+      <button type="button" data-insert="inline-math" class="studio-tool-btn">$x_i$ 行内公式</button>
+      <button type="button" data-insert="equation" class="studio-tool-btn">🔢 自动编号公式 \begin&#123;equation&#125;</button>
+      <button type="button" data-insert="align" class="studio-tool-btn">📐 多行推导 \begin&#123;align&#125;</button>
+      <button type="button" data-insert="matrix" class="studio-tool-btn">🎛 矩阵 \begin&#123;bmatrix&#125;</button>
+      <button type="button" data-insert="theorem" class="studio-tool-btn">📘 定理/引理框 (.theorem)</button>
+      <button type="button" data-insert="derivation" class="studio-tool-btn">📂 折叠详细证明 (.derivation)</button>
+      <button type="button" data-insert="note-box" class="studio-tool-btn">💡 核心结论框 (.kexue-note)</button>
+      <label class="studio-tool-btn studio-upload-label">
+        🖼 上传/插入图片
+        <input type="file" id="input-upload-image" accept="image/*" hidden />
+      </label>
+    </div>
+
+    <!-- Split Editor & Live Preview -->
+    <div class="studio-workspace">
+      <div class="studio-pane studio-editor-pane">
+        <div class="studio-pane-header">
+          <span>Markdown + LaTeX 源码（支持直接粘贴截图上传）</span>
+          <span id="editor-word-count">0 words</span>
+        </div>
+        <textarea
+          id="markdown-editor"
+          spellcheck="false"
+          placeholder="在这里直接写 Markdown 和 LaTeX 公式...&#10;&#10;支持 $...$ 行内公式、$$...$$ 块级公式、&#92;begin{equation}...&#92;label{eq:1}&#92;end{equation} 自动编号以及 &#92;eqref{eq:1} 引用。"
+        ></textarea>
+      </div>
+
+      <div class="studio-pane studio-preview-pane">
+        <div class="studio-pane-header">
+          <span>实时渲染预览（科学空间 MathJax 3 引擎）</span>
+          <div class="studio-preview-controls">
+            <button
+              type="button"
+              id="btn-toggle-sync"
+              class="studio-btn studio-btn-small studio-sync-active"
+              aria-pressed="true"
+              title="切换左右滚动条双向同步"
+            >
+              🔗 同步滚动: 开启
+            </button>
+            <button type="button" id="btn-rerender-math" class="studio-btn studio-btn-small">↻ 重刷公式编号</button>
+          </div>
+        </div>
+        <div id="markdown-preview" class="prose kexue-prose studio-preview-body"></div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<script is:inline>
+  (() => {
+    const REPO = "IMBALDY/IMBALDY.github.io";
+    const BRANCH = "main";
+    const STORAGE_TOKEN_KEY = "imbaldy_gh_token";
+    const STORAGE_DRAFT_KEY = "imbaldy_studio_autosave_v3";
+    const BUNDLED_POSTS = (() => {
+      try {
+        return JSON.parse(document.getElementById("bundled-posts-data")?.textContent || "{}");
+      } catch {
+        return {};
+      }
+    })();
+
+    // DOM Elements
+    const tokenPanel = document.getElementById("token-panel");
+    const btnTokenConfig = document.getElementById("btn-token-config");
+    const tokenStatusLabel = document.getElementById("token-status-label");
+    const inputToken = document.getElementById("input-github-token");
+    const btnSaveToken = document.getElementById("btn-save-token");
+    const btnClearToken = document.getElementById("btn-clear-token");
+    const statusBox = document.getElementById("studio-status");
+
+    const selectExisting = document.getElementById("select-existing-post");
+    const btnRefreshList = document.getElementById("btn-refresh-list");
+    const btnLoadDemo = document.getElementById("btn-load-demo");
+    const btnDeletePost = document.getElementById("btn-delete-post");
+
+    const metaTitle = document.getElementById("meta-title");
+    const metaSlug = document.getElementById("meta-slug");
+    const metaCategory = document.getElementById("meta-category");
+    const metaDate = document.getElementById("meta-date");
+    const metaTags = document.getElementById("meta-tags");
+    const metaSummary = document.getElementById("meta-summary");
+
+    const editor = document.getElementById("markdown-editor");
+    const preview = document.getElementById("markdown-preview");
+    const wordCountEl = document.getElementById("editor-word-count");
+    const btnRerenderMath = document.getElementById("btn-rerender-math");
+    const btnToggleSync = document.getElementById("btn-toggle-sync");
+
+    // =========================================================================
+    // Bidirectional Scroll Synchronization & Cursor Follow
+    // =========================================================================
+    let scrollSyncEnabled = true;
+    let activeScrollSource = null;
+    let scrollLockTimer = null;
+
+    const getScrollRatio = (el) => {
+      if (!el) return 0;
+      const maxScroll = el.scrollHeight - el.clientHeight;
+      return maxScroll > 0 ? Math.min(1, Math.max(0, el.scrollTop / maxScroll)) : 0;
+    };
+
+    const setScrollByRatio = (el, ratio) => {
+      if (!el) return;
+      const maxScroll = el.scrollHeight - el.clientHeight;
+      if (maxScroll > 0) {
+        el.scrollTop = ratio * maxScroll;
+      }
+    };
+
+    const syncEditorToPreview = () => {
+      if (!scrollSyncEnabled || !editor || !preview) return;
+      setScrollByRatio(preview, getScrollRatio(editor));
+    };
+
+    editor?.addEventListener(
+      "scroll",
+      () => {
+        if (!scrollSyncEnabled || activeScrollSource === "preview") return;
+        activeScrollSource = "editor";
+        syncEditorToPreview();
+        clearTimeout(scrollLockTimer);
+        scrollLockTimer = setTimeout(() => {
+          activeScrollSource = null;
+        }, 150);
+      },
+      { passive: true }
+    );
+
+    preview?.addEventListener(
+      "scroll",
+      () => {
+        if (!scrollSyncEnabled || activeScrollSource === "editor") return;
+        activeScrollSource = "preview";
+        setScrollByRatio(editor, getScrollRatio(preview));
+        clearTimeout(scrollLockTimer);
+        scrollLockTimer = setTimeout(() => {
+          activeScrollSource = null;
+        }, 150);
+      },
+      { passive: true }
+    );
+
+    btnToggleSync?.addEventListener("click", () => {
+      scrollSyncEnabled = !scrollSyncEnabled;
+      btnToggleSync.setAttribute("aria-pressed", String(scrollSyncEnabled));
+      btnToggleSync.classList.toggle("studio-sync-active", scrollSyncEnabled);
+      btnToggleSync.textContent = scrollSyncEnabled ? "🔗 同步滚动: 开启" : "⛓️‍💥 同步滚动: 关闭";
+      if (scrollSyncEnabled) {
+        syncEditorToPreview();
+      }
+    });
+
+    const btnPublish = document.getElementById("btn-publish");
+    const btnSaveDraft = document.getElementById("btn-save-draft");
+    const btnDownloadMd = document.getElementById("btn-download-md");
+    const inputUploadImage = document.getElementById("input-upload-image");
+
+    let currentFileSha = null;
+    let currentFilePath = null;
+    let slugManuallyEdited = false;
+
+    // Initialize default date to today
+    const todayStr = new Date().toISOString().slice(0, 10);
+    if (metaDate) metaDate.value = todayStr;
+
+    const showStatus = (msg, type = "info") => {
+      if (!statusBox) return;
+      statusBox.hidden = false;
+      statusBox.className = `studio-status studio-status-${type}`;
+      statusBox.innerHTML = msg;
+    };
+
+    const getToken = () => localStorage.getItem(STORAGE_TOKEN_KEY) || "";
+
+    const updateTokenBadge = () => {
+      const hasToken = Boolean(getToken());
+      if (tokenStatusLabel) {
+        tokenStatusLabel.textContent = hasToken ? "GitHub 已连接 ✓" : "配置 GitHub Token";
+      }
+    };
+    updateTokenBadge();
+
+    btnTokenConfig?.addEventListener("click", () => {
+      if (!tokenPanel) return;
+      tokenPanel.hidden = !tokenPanel.hidden;
+      if (!tokenPanel.hidden && inputToken) {
+        inputToken.value = getToken();
+      }
+    });
+
+    btnSaveToken?.addEventListener("click", () => {
+      const val = (inputToken?.value || "").trim();
+      if (!val) {
+        showStatus("请输入有效的 GitHub Personal Access Token。", "error");
+        return;
+      }
+      localStorage.setItem(STORAGE_TOKEN_KEY, val);
+      updateTokenBadge();
+      if (tokenPanel) tokenPanel.hidden = true;
+      showStatus("✅ GitHub Token 已保存在本地浏览器！现在可以直接在网页上拉取、发布或修改文章。", "success");
+      fetchExistingPosts();
+    });
+
+    btnClearToken?.addEventListener("click", () => {
+      localStorage.removeItem(STORAGE_TOKEN_KEY);
+      if (inputToken) inputToken.value = "";
+      updateTokenBadge();
+      showStatus("已清除本地保存的 GitHub Token。", "info");
+    });
+
+    metaTitle?.addEventListener("input", () => {
+      if (!slugManuallyEdited && selectExisting?.value === "__new__") {
+        const asciiSlug = metaTitle.value
+          .toLowerCase()
+          .trim()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/(^-|-$)/g, "");
+        metaSlug.value = asciiSlug || `post-${todayStr}`;
+      }
+      saveLocalAutosave();
+    });
+
+    metaSlug?.addEventListener("input", () => {
+      slugManuallyEdited = Boolean(metaSlug.value.trim());
+      saveLocalAutosave();
+    });
+
+    // =========================================================================
+    // Kexue.fm Style Markdown + Math Protection Pipeline
+    // =========================================================================
+    const renderPreview = () => {
+      const raw = editor?.value || "";
+      const words = raw.trim().split(/\s+/).filter(Boolean).length;
+      if (wordCountEl) wordCountEl.textContent = `${words} words`;
+
+      // Step 1: Protect fenced code blocks and inline code first so $ inside code is untouched
+      const codePlaceholders = [];
+      let text = raw.replace(/```[\s\S]*?```|`[^`\n]+`/g, (match) => {
+        const id = `@@CODE_BLOCK_${codePlaceholders.length}@@`;
+        codePlaceholders.push(match);
+        return id;
+      });
+
+      // Step 2: Protect Math blocks ($$...$$, \begin{equation|align|gather|multline}...\end{...}, and $...$)
+      // BEFORE Marked parses Markdown so _, *, \\, {} are NEVER corrupted!
+      const mathPlaceholders = [];
+      const storeMath = (content, isDisplay) => {
+        const id = `@@MATH_NODE_${mathPlaceholders.length}@@`;
+        mathPlaceholders.push({ content, isDisplay });
+        return id;
+      };
+
+      // 2a. Display math $$...$$
+      text = text.replace(/\$\$([\s\S]+?)\$\$/g, (_, mathBody) => {
+        const trimmed = mathBody.trim();
+        const isEnv = /^\\begin\{(equation|align|gather|multline|flalign)\*?\}/i.test(trimmed);
+        return storeMath(isEnv ? trimmed : `\\[\n${trimmed}\n\\]`, true);
+      });
+
+      // 2b. Standalone numbered environments \begin{equation}...\end{equation} outside $$
+      text = text.replace(
+        /\\begin\{(equation|align|gather|multline|flalign)(\*?)\}([\s\S]*?)\\end\{\1\2\}/gi,
+        (fullMatch) => storeMath(fullMatch, true)
+      );
+
+      // 2c. Inline math $...$
+      text = text.replace(/(^|[^\\])\$(?!\$)([^\n$]+?)\$/g, (_, prefix, mathBody) => {
+        return `${prefix}${storeMath(`\\(${mathBody}\\)`, false)}`;
+      });
+
+      // Step 3: Restore code blocks before running Marked
+      text = text.replace(/@@CODE_BLOCK_(\d+)@@/g, (_, idx) => codePlaceholders[Number(idx)]);
+
+      // Step 4: Parse Markdown to HTML
+      let html = window.marked ? window.marked.parse(text) : text;
+
+      // Step 5: Restore Math placeholders as clean .notranslate containers
+      html = html.replace(/@@MATH_NODE_(\d+)@@/g, (_, idx) => {
+        const item = mathPlaceholders[Number(idx)];
+        if (!item) return "";
+        const escaped = item.content
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+        return item.isDisplay
+          ? `<div class="math-display notranslate" translate="no">${escaped}</div>`
+          : `<span class="math-inline notranslate" translate="no">${escaped}</span>`;
+      });
+
+      if (preview) {
+        preview.innerHTML = html;
+        syncEditorToPreview();
+      }
+
+      // Step 6: Typeset with MathJax 3 (resetting equation numbers so (1), (2), \eqref stay accurate)
+      if (window.MathJax && window.MathJax.typesetPromise && preview) {
+        if (window.MathJax.texReset) {
+          window.MathJax.texReset();
+        }
+        window.MathJax.typesetClear?.([preview]);
+        window.MathJax.typesetPromise([preview])
+          .then(() => {
+            syncEditorToPreview();
+          })
+          .catch((err) => {
+            console.warn("MathJax typeset warning:", err);
+          });
+      }
+    };
+
+    let debounceTimer = null;
+    const scheduleRender = () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        renderPreview();
+        saveLocalAutosave();
+      }, 180);
+    };
+
+    editor?.addEventListener("input", scheduleRender);
+    btnRerenderMath?.addEventListener("click", renderPreview);
+
+    // =========================================================================
+    // Quick-Insert Scientific Snippets
+    // =========================================================================
+    const snippets = {
+      "inline-math": "$\\bm{x}_t \\in \\R^d$",
+      equation:
+        "\n$$\n\\begin{equation}\n\\mathcal{L}(\\theta) = \\E_{\\bm{x} \\sim p_{\\text{data}}} \\left[ -\\log p_\\theta(\\bm{x}_t \\mid \\bm{x}_{<t}) \\right]\n\\label{eq:loss}\n\\end{equation}\n$$\n由式 $\\eqref{eq:loss}$ 可知，",
+      align:
+        "\n$$\n\\begin{align}\n\\KL(q(\\bm{z}\\mid\\bm{x}) \\,\\|\\, p(\\bm{z})) &= \\int q(\\bm{z}\\mid\\bm{x}) \\log \\frac{q(\\bm{z}\\mid\\bm{x})}{p(\\bm{z})} \\dd\\bm{z} \\label{eq:kl-def} \\\\\n&= \\E_{q(\\bm{z}\\mid\\bm{x})}[\\log q(\\bm{z}\\mid\\bm{x})] - \\E_{q(\\bm{z}\\mid\\bm{x})}[\\log p(\\bm{z})]\n\\end{align}\n$$\n",
+      matrix:
+        "\n$$\n\\bm{A} = \\begin{bmatrix}\na_{1,1} & a_{1,2} & \\cdots & a_{1,n} \\\\\na_{2,1} & a_{2,2} & \\cdots & a_{2,n} \\\\\n\\vdots & \\vdots & \\ddots & \\vdots \\\\\na_{m,1} & a_{m,2} & \\cdots & a_{m,n}\n\\end{bmatrix}\n$$\n",
+      theorem:
+        '\n<div class="theorem">\n<div class="theorem-title">定理 1（记忆压缩率下界）</div>\n\n设视频流特征序列为 $\\{\\bm{k}_t, \\bm{v}_t\\}_{t=1}^T$，在给定重构误差上界 $\\epsilon > 0$ 下，最优多粒度 KV 缓存的秩满足：\n$$\n\\operatorname{rank}(\\tilde{\\bm{K}}) \\ge \\Omega\\!\\left(\\frac{I(\\bm{X}_{1:T}; \\bm{Y})}{\\log(1 + 1/\\epsilon)}\\right)\n$$\n</div>\n',
+      derivation:
+        '\n<details class="derivation">\n<summary>展开查看详细数学推导（Proof &amp; Derivation）</summary>\n<div class="derivation-body">\n\n**证明：** 对目标泛函关于 $\\bm{Q}_t$ 求一阶变分，利用矩阵迹的循环性质 $\\Tr(\\bm{A}\\bm{B}) = \\Tr(\\bm{B}\\bm{A})$，可得：\n$$\n\\begin{equation}\n\\frac{\\partial \\mathcal{J}}{\\partial \\bm{K}_t} = 2(\\bm{K}_t \\bm{K}_t^\\top - \\bm{I})\\bm{K}_t = \\bm{0}\n\\end{equation}\n$$\n证毕 $\\blacksquare$\n\n</div>\n</details>\n',
+      "note-box":
+        '\n<div class="kexue-note">\n<strong>核心直觉（Physical Intuition）：</strong> 从动力系统的视角看，注意力机制中的 Value 缓存本质上是在维护状态空间的低维流形投影。\n</div>\n',
+    };
+
+    document.querySelectorAll("[data-insert]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const key = btn.getAttribute("data-insert");
+        const snippet = snippets[key];
+        if (!snippet || !editor) return;
+        const start = editor.selectionStart ?? editor.value.length;
+        const end = editor.selectionEnd ?? editor.value.length;
+        editor.value = editor.value.slice(0, start) + snippet + editor.value.slice(end);
+        editor.focus();
+        editor.selectionStart = editor.selectionEnd = start + snippet.length;
+        renderPreview();
+        saveLocalAutosave();
+      });
+    });
+
+    // =========================================================================
+    // Build & Parse YAML Frontmatter
+    // =========================================================================
+    const buildMarkdownFile = (isDraft = false) => {
+      const title = (metaTitle?.value || "Untitled Post").trim().replace(/"/g, '\\"');
+      const summary = (metaSummary?.value || title).trim().replace(/"/g, '\\"');
+      const date = (metaDate?.value || todayStr).trim();
+      const category = metaCategory?.value || "Notes";
+      const tags = (metaTags?.value || "")
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean);
+
+      const lines = [
+        "---",
+        `title: "${title}"`,
+        `summary: "${summary}"`,
+        `date: ${date}`,
+        `category: ${category}`,
+      ];
+      if (tags.length > 0) {
+        lines.push("tags:");
+        tags.forEach((t) => lines.push(`  - "${t.replace(/"/g, '\\"')}"`));
+      } else {
+        lines.push("tags: []");
+      }
+      if (isDraft) {
+        lines.push("draft: true");
+      }
+      lines.push("---", "", (editor?.value || "").trim(), "");
+      return lines.join("\n");
+    };
+
+    const parseMarkdownFile = (rawFileContent, filename = "") => {
+      const match = rawFileContent.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
+      if (!match) {
+        if (editor) editor.value = rawFileContent;
+        renderPreview();
+        return;
+      }
+      const frontmatter = match[1];
+      const body = match[2];
+
+      const getScalar = (key) => {
+        const m = frontmatter.match(new RegExp(`^${key}:\\s*(.+)$`, "m"));
+        return m ? m[1].trim().replace(/^["']|["']$/g, "") : "";
+      };
+
+      if (metaTitle) metaTitle.value = getScalar("title");
+      if (metaSummary) metaSummary.value = getScalar("summary");
+      if (metaDate) metaDate.value = getScalar("date").slice(0, 10) || todayStr;
+      if (metaCategory) {
+        const cat = getScalar("category");
+        if (["Notes", "Blog", "Essay"].includes(cat)) metaCategory.value = cat;
+      }
+
+      // Parse tags array (either inline [a, b] or multi-line - a)
+      const inlineTags = frontmatter.match(/^tags:\s*\[(.*?)\]/m);
+      if (inlineTags) {
+        metaTags.value = inlineTags[1]
+          .split(",")
+          .map((s) => s.trim().replace(/^["']|["']$/g, ""))
+          .filter(Boolean)
+          .join(", ");
+      } else {
+        const listMatch = frontmatter.match(/^tags:\s*\r?\n((?:\s*-\s*.+\r?\n?)+)/m);
+        if (listMatch) {
+          const items = [...listMatch[1].matchAll(/^\s*-\s*(.+)$/gm)].map((m) =>
+            m[1].trim().replace(/^["']|["']$/g, "")
+          );
+          metaTags.value = items.join(", ");
+        } else {
+          metaTags.value = "";
+        }
+      }
+
+      if (filename && metaSlug) {
+        metaSlug.value = filename.replace(/\.(md|mdx)$/i, "");
+        slugManuallyEdited = true;
+      }
+
+      if (editor) editor.value = body.trim();
+      renderPreview();
+    };
+
+    // =========================================================================
+    // GitHub API Integration (List, Load, Publish, Upload Image, Delete)
+    // =========================================================================
+    const encodeBase64UTF8 = (str) => {
+      const bytes = new TextEncoder().encode(str);
+      let binary = "";
+      bytes.forEach((b) => (binary += String.fromCharCode(b)));
+      return btoa(binary);
+    };
+
+    const decodeBase64UTF8 = (b64) => {
+      const binary = atob(b64.replace(/\s/g, ""));
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      return new TextDecoder().decode(bytes);
+    };
+
+    const githubHeaders = () => {
+      const token = getToken();
+      const headers = { Accept: "application/vnd.github+json" };
+      if (token) headers.Authorization = `Bearer ${token}`;
+      return headers;
+    };
+
+    const populateDropdown = (remoteMdFiles = []) => {
+      if (!selectExisting) return;
+      const mergedMap = new Map();
+
+      // 1. Add all local/build-time bundled posts first
+      Object.values(BUNDLED_POSTS).forEach((p) => {
+        mergedMap.set(p.path, { path: p.path, name: p.name, sha: null, source: "local" });
+      });
+
+      // 2. Overlay remote GitHub files
+      remoteMdFiles.forEach((f) => {
+        mergedMap.set(f.path, { path: f.path, name: f.name, sha: f.sha, source: "github" });
+      });
+
+      const prevValue = selectExisting.value;
+      selectExisting.innerHTML = `<option value="__new__">＋ 新建文章 (New Post)</option>`;
+      mergedMap.forEach((file) => {
+        const opt = document.createElement("option");
+        opt.value = file.path;
+        opt.textContent = `📄 ${file.name}`;
+        if (file.sha) opt.dataset.sha = file.sha;
+        opt.dataset.name = file.name;
+        selectExisting.appendChild(opt);
+      });
+      if (prevValue && [...selectExisting.options].some((o) => o.value === prevValue)) {
+        selectExisting.value = prevValue;
+      }
+    };
+
+    const loadBundledPost = (item) => {
+      if (!item) return false;
+      currentFilePath = item.path;
+      currentFileSha = null;
+      slugManuallyEdited = true;
+      if (metaTitle) metaTitle.value = item.title || "";
+      if (metaSlug) metaSlug.value = item.slug || "";
+      if (metaSummary) metaSummary.value = item.summary || "";
+      if (metaDate) metaDate.value = item.date || todayStr;
+      if (metaCategory && ["Notes", "Blog", "Essay"].includes(item.category)) {
+        metaCategory.value = item.category;
+      }
+      if (metaTags) {
+        metaTags.value = Array.isArray(item.tags) ? item.tags.join(", ") : "";
+      }
+      if (editor) editor.value = (item.body || "").trim();
+      renderPreview();
+      return true;
+    };
+
+    const fetchExistingPosts = async (preselectSlug = "") => {
+      if (!selectExisting) return;
+      populateDropdown([]);
+
+      const targetPath = preselectSlug
+        ? `src/content/writing/${preselectSlug.replace(/\.(md|mdx)$/i, "")}.md`
+        : "";
+
+      // Immediately load from bundled posts if present so local dev & unpushed posts work in 0ms
+      if (targetPath && BUNDLED_POSTS[targetPath]) {
+        selectExisting.value = targetPath;
+        loadBundledPost(BUNDLED_POSTS[targetPath]);
+        showStatus(
+          `✅ 已加载文章 <code>${BUNDLED_POSTS[targetPath].name}</code>，可直接在左侧编辑并实时同步滚动预览。`,
+          "success"
+        );
+      }
+
+      try {
+        const res = await fetch(
+          `https://api.github.com/repos/${REPO}/contents/src/content/writing?ref=${BRANCH}&t=${Date.now()}`,
+          { headers: githubHeaders() }
+        );
+        if (!res.ok) return;
+        const files = await res.json();
+        if (!Array.isArray(files)) return;
+
+        const mdFiles = files.filter((f) => f.type === "file" && /\.(md|mdx)$/i.test(f.name));
+        populateDropdown(mdFiles);
+
+        if (targetPath) {
+          const foundRemote = mdFiles.find((f) => f.path === targetPath);
+          if (foundRemote) {
+            selectExisting.value = targetPath;
+            await loadPostFromGitHub(targetPath);
+          }
+        }
+      } catch (err) {
+        console.warn("Could not list remote GitHub posts:", err);
+      }
+    };
+
+    const loadPostFromGitHub = async (path) => {
+      // First load local bundled copy immediately if available
+      const hasLocal = Boolean(BUNDLED_POSTS[path]);
+      if (hasLocal) {
+        loadBundledPost(BUNDLED_POSTS[path]);
+      } else {
+        showStatus(`正在从 GitHub 加载 <code>${path}</code>...`, "info");
+      }
+
+      try {
+        const res = await fetch(
+          `https://api.github.com/repos/${REPO}/contents/${path}?ref=${BRANCH}&t=${Date.now()}`,
+          { headers: githubHeaders() }
+        );
+        if (!res.ok) {
+          if (hasLocal) {
+            showStatus(
+              `✅ 已加载本地文章 <code>${BUNDLED_POSTS[path].name}</code>（尚未推送至远端 GitHub，点击 Publish 可直接发布）。`,
+              "success"
+            );
+            return;
+          }
+          throw new Error(`HTTP ${res.status}`);
+        }
+        const data = await res.json();
+        currentFileSha = data.sha;
+        currentFilePath = data.path;
+        if (btnDeletePost) btnDeletePost.hidden = false;
+        const content = decodeBase64UTF8(data.content);
+        parseMarkdownFile(content, data.name);
+        showStatus(`✅ 已加载文章 <code>${data.name}</code>，修改后点击 Publish 即可直接更新线上版本。`, "success");
+      } catch (err) {
+        if (!hasLocal) {
+          showStatus(`加载文章失败：${err.message}`, "error");
+        }
+      }
+    };
+
+    selectExisting?.addEventListener("change", () => {
+      const val = selectExisting.value;
+      if (val === "__new__") {
+        currentFileSha = null;
+        currentFilePath = null;
+        slugManuallyEdited = false;
+        if (btnDeletePost) btnDeletePost.hidden = true;
+        if (metaTitle) metaTitle.value = "";
+        if (metaSlug) metaSlug.value = "";
+        if (metaSummary) metaSummary.value = "";
+        if (metaTags) metaTags.value = "";
+        if (metaDate) metaDate.value = todayStr;
+        if (editor) editor.value = "";
+        renderPreview();
+      } else {
+        loadPostFromGitHub(val);
+      }
+    });
+
+    btnRefreshList?.addEventListener("click", () => fetchExistingPosts());
+
+    const publishPost = async (isDraft = false) => {
+      const token = getToken();
+      if (!token) {
+        if (tokenPanel) tokenPanel.hidden = false;
+        showStatus("请先点击上方「🔑 GitHub Token」配置你的 Token 才能直接推送到 GitHub。", "error");
+        return;
+      }
+
+      const title = (metaTitle?.value || "").trim();
+      const slug = (metaSlug?.value || "").trim().replace(/\.(md|mdx)$/i, "");
+      const summary = (metaSummary?.value || "").trim();
+
+      if (!title || !slug) {
+        showStatus("请填写文章标题 (Title) 和 URL 路径名 (Slug)。", "error");
+        return;
+      }
+      if (!summary) {
+        metaSummary.value = title;
+      }
+
+      const targetPath = `src/content/writing/${slug}.md`;
+      const fullMarkdown = buildMarkdownFile(isDraft);
+
+      showStatus(
+        `⏳ 正在将 <code>${targetPath}</code> 提交到 GitHub <code>${REPO}</code>...`,
+        "info"
+      );
+
+      try {
+        // Check if file already exists to get latest sha
+        let sha = currentFilePath === targetPath ? currentFileSha : null;
+        if (!sha) {
+          const checkRes = await fetch(
+            `https://api.github.com/repos/${REPO}/contents/${targetPath}?ref=${BRANCH}`,
+            { headers: githubHeaders() }
+          );
+          if (checkRes.ok) {
+            const existing = await checkRes.json();
+            sha = existing.sha;
+          }
+        }
+
+        const bodyPayload = {
+          message: `content: ${sha ? "更新" : "新建"} ${targetPath}`,
+          content: encodeBase64UTF8(fullMarkdown),
+          branch: BRANCH,
+        };
+        if (sha) bodyPayload.sha = sha;
+
+        const putRes = await fetch(
+          `https://api.github.com/repos/${REPO}/contents/${targetPath}`,
+          {
+            method: "PUT",
+            headers: {
+              ...githubHeaders(),
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(bodyPayload),
+          }
+        );
+
+        if (!putRes.ok) {
+          const errData = await putRes.json().catch(() => ({}));
+          throw new Error(errData.message || `HTTP ${putRes.status}`);
+        }
+
+        const result = await putRes.json();
+        currentFileSha = result.content?.sha || null;
+        currentFilePath = targetPath;
+        if (btnDeletePost) btnDeletePost.hidden = false;
+
+        await fetchExistingPosts(slug);
+        showStatus(
+          `🎉 <strong>${isDraft ? "草稿已保存" : "发布成功"}！</strong>已提交至 <code>${targetPath}</code>。GitHub Actions 正在自动构建，约 1 分钟后即可在 <a href="/writing/${slug}/" target="_blank">/writing/${slug}/ ↗</a> 查看！`,
+          "success"
+        );
+      } catch (err) {
+        showStatus(`❌ 发布失败：${err.message}（请检查 Token 是否有 Contents 读写权限）`, "error");
+      }
+    };
+
+    btnPublish?.addEventListener("click", () => publishPost(false));
+    btnSaveDraft?.addEventListener("click", () => publishPost(true));
+
+    btnDeletePost?.addEventListener("click", async () => {
+      if (!currentFilePath || !currentFileSha) return;
+      if (!confirm(`确定要从 GitHub 仓库中删除文章 ${currentFilePath} 吗？`)) return;
+
+      const token = getToken();
+      if (!token) {
+        if (tokenPanel) tokenPanel.hidden = false;
+        showStatus("请先配置 GitHub Token。", "error");
+        return;
+      }
+
+      try {
+        showStatus(`正在删除 <code>${currentFilePath}</code>...`, "info");
+        const res = await fetch(
+          `https://api.github.com/repos/${REPO}/contents/${currentFilePath}`,
+          {
+            method: "DELETE",
+            headers: {
+              ...githubHeaders(),
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              message: `content: 删除 ${currentFilePath}`,
+              sha: currentFileSha,
+              branch: BRANCH,
+            }),
+          }
+        );
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        currentFilePath = null;
+        currentFileSha = null;
+        btnDeletePost.hidden = true;
+        selectExisting.value = "__new__";
+        selectExisting.dispatchEvent(new Event("change"));
+        await fetchExistingPosts();
+        showStatus("✅ 文章已从仓库删除，GitHub Pages 将自动同步更新。", "success");
+      } catch (err) {
+        showStatus(`删除失败：${err.message}`, "error");
+      }
+    });
+
+    // Image Upload (File input or Clipboard Paste)
+    const uploadImageFile = async (file) => {
+      const token = getToken();
+      if (!token) {
+        if (tokenPanel) tokenPanel.hidden = false;
+        showStatus("上传图片需要先配置 GitHub Token（图片将自动上传到 public/images/writing/）。", "error");
+        return;
+      }
+
+      const ext = (file.name?.split(".").pop() || "png").toLowerCase();
+      const safeName = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}.${ext}`;
+      const repoPath = `public/images/writing/${safeName}`;
+      const publicUrl = `/images/writing/${safeName}`;
+
+      showStatus(`⏳ 正在上传图片 <code>${safeName}</code> 到 GitHub...`, "info");
+
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const base64Content = String(reader.result).split(",")[1];
+          const res = await fetch(
+            `https://api.github.com/repos/${REPO}/contents/${repoPath}`,
+            {
+              method: "PUT",
+              headers: {
+                ...githubHeaders(),
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                message: `content: 上传图片 ${repoPath}`,
+                content: base64Content,
+                branch: BRANCH,
+              }),
+            }
+          );
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const mdImage = `\n![${file.name || "figure"}](${publicUrl})\n`;
+          const start = editor.selectionStart ?? editor.value.length;
+          editor.value = editor.value.slice(0, start) + mdImage + editor.value.slice(start);
+          renderPreview();
+          showStatus(`✅ 图片已上传至 <code>${repoPath}</code> 并插入正文！`, "success");
+        } catch (err) {
+          showStatus(`图片上传失败：${err.message}`, "error");
+        }
+      };
+      reader.readAsDataURL(file);
+    };
+
+    inputUploadImage?.addEventListener("change", (e) => {
+      const file = e.target.files?.[0];
+      if (file) uploadImageFile(file);
+      e.target.value = "";
+    });
+
+    editor?.addEventListener("paste", (e) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const item of items) {
+        if (item.type.startsWith("image/")) {
+          e.preventDefault();
+          const file = item.getAsFile();
+          if (file) uploadImageFile(file);
+          break;
+        }
+      }
+    });
+
+    // Download .md backup
+    btnDownloadMd?.addEventListener("click", () => {
+      const slug = (metaSlug?.value || "untitled-post").trim();
+      const content = buildMarkdownFile(false);
+      const blob = new Blob([content], { type: "text/markdown;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${slug}.md`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    // Demo Template Button
+    const DEMO_TEMPLATE = {
+      title: "从多粒度 KV 缓存压缩看流式视频理解的信息瓶颈与世界模型记忆机制",
+      slug: "kexue-math-derivation-demo",
+      category: "Notes",
+      tags: "Video Understanding, KV Cache, World Model, Information Bottleneck, Math",
+      summary: "参考科学空间（kexue.fm）长文推导风格，系统推导长时程流式视频问答与世界模型中的率失真下界、Lipschitz 注意力近似误差、状态空间递归演化以及多粒度混合缓存的最优分配律。",
+      body: `在长时程流式视频理解（Streaming Video QA）与交互式游戏世界模型（Interactive World Models）中，随着时间步 $t \\to \\infty$，原始视觉 Token 序列 $\\bm{X}_{1:t} = (\\bm{x}_1, \\bm{x}_2, \\dots, \\bm{x}_t)$ 的键值缓存（KV Cache）呈线性甚至超线性增长。如何在有限显存预算 $B \\ll N_t$ 下保留对未来预测与跨时序推理最关键的记忆状态，是构建长程具身智能体的核心数学问题。
+
+本文采用「科学空间」式的自底向上推导风格，从**率失真理论（Rate-Distortion Theory）**与**矩阵扰动分析**出发，完整推导多粒度 KV 缓存压缩的理论误差界与最优分配律。
+
+---
+
+## 1. 问题形式化与符号约定
+
+设第 $l$ 层自注意力模块在时刻 $t$ 累积的历史键矩阵与值矩阵分别为 $\\bm{K}_t, \\bm{V}_t \\in \\R^{N_t \\times d}$，其中 $N_t = t \\cdot M$ 为累计视觉 Token 总数，$M$ 为单帧 Patch 数量，$d$ 为特征维度。对于任意当前查询向量 $\\bm{q} \\in \\R^d$，标准缩放点积注意力（Scaled Dot-Product Attention）的精确输出定义为：
+
+$$
+\\begin{equation}
+\\bm{o}(\\bm{q}; \\bm{K}_t, \\bm{V}_t) = \\sum_{i=1}^{N_t} \\alpha_i(\\bm{q}) \\bm{v}_i = \\frac{\\sum_{i=1}^{N_t} \\exp\\!\\left(\\frac{\\inner{\\bm{q}}{\\bm{k}_i}}{\\sqrt{d}}\\right) \\bm{v}_i}{\\sum_{j=1}^{N_t} \\exp\\!\\left(\\frac{\\inner{\\bm{q}}{\\bm{k}_j}}{\\sqrt{d}}\\right)}
+\\label{eq:attn-exact}
+\\end{equation}
+$$
+
+其中归一化注意力权重满足单纯形约束 $\\bm{\\alpha}(\\bm{q}) \\in \\Delta^{N_t - 1}$。为了将缓存容量严格限制在预算 $B \\ll N_t$ 以内，我们需要构造一个多粒度压缩算子 $\\mathcal{C}: \\R^{N_t \\times d} \\times \\R^{N_t \\times d} \\to \\R^{B \\times d} \\times \\R^{B \\times d}$，将原始缓存映射为紧凑表示 $(\\tilde{\\bm{K}}_t, \\tilde{\\bm{V}}_t)$，并使得期望输出漂移最小化：
+
+$$
+\\begin{equation}
+\\min_{\\mathcal{C},\\, |\\tilde{\\bm{K}}_t| \\le B} \\mathcal{R}(\\mathcal{C}) \\triangleq \\E_{\\bm{q} \\sim \\mathcal{Q}} \\left[ \\norm{\\bm{o}(\\bm{q}; \\bm{K}_t, \\bm{V}_t) - \\bm{o}(\\bm{q}; \\tilde{\\bm{K}}_t, \\tilde{\\bm{V}}_t)}_2^2 \\right]
+\\label{eq:risk-obj}
+\\end{equation}
+$$
+
+---
+
+## 2. 注意力近似的 Lipschitz 扰动上界
+
+一个自然的问题是：当我们用聚类或池化后的代表性键值 $(\\tilde{\\bm{k}}_m, \\tilde{\\bm{v}}_m)$ 替代原始划分簇 $S_m \\subset \\{1, \\dots, N_t\\}$ 时，式 $\\eqref{eq:attn-exact}$ 的输出会产生多大的偏差？
+
+<div class="theorem">
+<div class="theorem-title">定理 1（多粒度注意力近似的 Lipschitz 误差上界）</div>
+
+设查询分布 $\\mathcal{Q}$ 的支集满足有界范数条件 $\\norm{\\bm{q}}_2 \\le R_q$。若将历史视觉 Token 划分为互不相交的 $B$ 个粒度簇 $\\mathcal{P} = \\{S_1, S_2, \\dots, S_B\\}$（对应片段级 Segment、帧级 Frame 与补丁级 Patch），并在每个簇内赋予对数多重度偏置 $\\mu_m = \\log |S_m|$，则精确注意力输出 $\\eqref{eq:attn-exact}$ 与压缩后注意力输出的二范数误差满足：
+
+$$
+\\begin{equation}
+\\norm{\\bm{o}(\\bm{q}; \\bm{K}_t, \\bm{V}_t) - \\bm{o}(\\bm{q}; \\tilde{\\bm{K}}_t, \\tilde{\\bm{V}}_t)}_2 \\le \\sum_{m=1}^{B} \\bar{\\alpha}_m(\\bm{q}) \\left( \\epsilon_m^{(V)} + \\frac{R_q}{\\sqrt{d}} \\epsilon_m^{(K)} \\cdot \\operatorname{osc}_{S_m}(\\bm{V}_t) \\right) + \\mathcal{O}\\!\\left(\\frac{R_q^2}{d}\\right)
+\\label{eq:lipschitz-bound}
+\\end{equation}
+$$
+
+其中 $\\epsilon_m^{(K)} = \\max_{i \\in S_m} \\norm{\\bm{k}_i - \\tilde{\\bm{k}}_m}_2$ 与 $\\epsilon_m^{(V)} = \\norm{\\bar{\\bm{v}}_m - \\tilde{\\bm{v}}_m}_2$ 分别为第 $m$ 个簇的键半径与值质心偏差，$\\operatorname{osc}_{S_m}(\\bm{V}_t) = \\max_{i,j \\in S_m} \\norm{\\bm{v}_i - \\bm{v}_j}_2$ 为簇内值振幅。
+</div>
+
+<details class="derivation" open>
+<summary>展开查看定理 1 的详细数学推导（Proof &amp; 对数配分函数 Taylor 展开）</summary>
+<div class="derivation-body">
+
+**证明：** 记对数配分函数（Log-Partition Function）为：
+
+$$
+\\begin{equation}
+Z(\\bm{q}; \\bm{K}_t) = \\log \\sum_{i=1}^{N_t} \\exp\\!\\left(\\frac{\\inner{\\bm{q}}{\\bm{k}_i}}{\\sqrt{d}}\\right)
+\\label{eq:log-partition}
+\\end{equation}
+$$
+
+对于任意划分簇 $S_m$，我们将簇内每个键向量写为中心加微扰的形式 $\\bm{k}_i = \\tilde{\\bm{k}}_m + \\Delta \\bm{k}_i$。对簇内局部配分项关于 $\\Delta \\bm{k}_i$ 作一阶 Taylor 展开：
+
+$$
+\\begin{align}
+\\sum_{i \\in S_m} \\exp\\!\\left(\\frac{\\inner{\\bm{q}}{\\bm{k}_i}}{\\sqrt{d}}\\right) \\bm{v}_i &= \\exp\\!\\left(\\frac{\\inner{\\bm{q}}{\\tilde{\\bm{k}}_m}}{\\sqrt{d}}\\right) \\sum_{i \\in S_m} \\exp\\!\\left(\\frac{\\inner{\\bm{q}}{\\Delta \\bm{k}_i}}{\\sqrt{d}}\\right) \\bm{v}_i \\nonumber \\\\
+&= |S_m| \\exp\\!\\left(\\frac{\\inner{\\bm{q}}{\\tilde{\\bm{k}}_m}}{\\sqrt{d}}\\right) \\left[ \\bar{\\bm{v}}_m + \\frac{1}{\\sqrt{d}} \\Cov_{i \\in S_m}\\!\\left(\\bm{v}_i, \\inner{\\bm{q}}{\\Delta \\bm{k}_i}\\right) + \\mathcal{O}\\!\\left(\\frac{\\norm{\\bm{q}}_2^2}{d}\\right) \\right]
+\\label{eq:cov-decomp}
+\\end{align}
+$$
+
+利用 Cauchy-Schwarz 不等式与 Popoviciu 方差上界，式 $\\eqref{eq:cov-decomp}$ 中的局部协方差项可被严格控制为：
+
+$$
+\\begin{equation}
+\\norm{\\Cov_{i \\in S_m}\\!\\left(\\bm{v}_i, \\inner{\\bm{q}}{\\Delta \\bm{k}_i}\\right)}_2 \\le \\norm{\\bm{q}}_2 \\cdot \\max_{i \\in S_m} \\norm{\\Delta \\bm{k}_i}_2 \\cdot \\operatorname{osc}_{S_m}(\\bm{V}_t)
+\\label{eq:popoviciu}
+\\end{equation}
+$$
+
+将式 $\\eqref{eq:popoviciu}$ 代回式 $\\eqref{eq:cov-decomp}$ 并对所有簇 $m = 1, \\dots, B$ 求和归一化，三角不等式直接给出式 $\\eqref{eq:lipschitz-bound}$。证毕 $\\blacksquare$
+
+</div>
+</details>
+
+<div class="kexue-note">
+
+**核心直觉（Physical Intuition）：** 式 $\\eqref{eq:lipschitz-bound}$ 揭示了一个极其重要但常被忽略的事实——**单纯丢弃 Token（Eviction）而不补足对数多重度偏置 $\\mu_m = \\log |S_m|$，会导致低频背景簇的注意力质量被指数级低估！** 而在合并相似 Token 时加上 $\\log |S_m|$ 修正，才能保证配分函数 $Z(\\bm{q})$ 的无偏性。
+
+</div>
+
+---
+
+## 3. 从信息瓶颈看三级粒度（Segment / Frame / Patch）的最优分配
+
+在真实的流式视频或具身导航场景中，历史帧的时间跨度往往横跨数十分钟。假设我们将总缓存预算 $B$ 拆分为三个尺度的子预算：
+
+$$
+\\begin{equation}
+B = B_{\\text{seg}} + B_{\\text{frame}} + B_{\\text{patch}}
+\\label{eq:budget-split}
+\\end{equation}
+$$
+
+设视频特征在时间轴上的自相关函数遵循幂律衰减（Power-Law Temporal Decay），即相距 $\\tau$ 步的两个视觉状态之间的互信息满足 $I(\\bm{X}_{t-\\tau}; \\bm{Y}_t) \\propto \\tau^{-\\gamma}$（其中 $\\gamma > 0$ 为记忆衰减指数）。我们可以将三层粒度的转移矩阵写成块三角算子形式：
+
+$$
+\\bm{T}_{\\text{multi}} = \\begin{bmatrix}
+\\bm{P}_{\\text{seg}} & \\bm{0} & \\bm{0} \\\\
+\\bm{R}_{\\text{f}\\to\\text{s}} & \\bm{P}_{\\text{frame}} & \\bm{0} \\\\
+\\bm{0} & \\bm{R}_{\\text{p}\\to\\text{f}} & \\bm{I}_{\\text{patch}}
+\\end{bmatrix} \\in \\R^{B \\times N_t}
+$$
+
+<div class="theorem">
+<div class="theorem-title">引理 1（率失真意义下的最优缓存分配比）</div>
+
+在给定总预算 $B$ 与时间衰减率 $\\gamma \\in (0, 2)$ 下，使期望近似风险 $\\eqref{eq:risk-obj}$ 最小化的第 $k$ 层时间窗口密度 $\\rho(\\tau)$ 满足变分欧拉-拉格朗日方程（Euler-Lagrange Equation）：
+
+$$
+\\begin{equation}
+\\rho^*(\\tau) \\propto \\tau^{-\\frac{\\gamma}{\\gamma + 2}}, \\qquad \\int_{1}^{T} \\rho^*(\\tau) \\dd\\tau = B
+\\label{eq:optimal-density}
+\\end{equation}
+$$
+</div>
+
+---
+
+## 4. 与线性注意力及状态空间模型（SSM）的对偶统一
+
+对指数核 $\\exp(\\inner{\\bm{q}}{\\bm{k}} / \\sqrt{d})$ 作二阶泰勒展开或随机傅里叶特征（Random Fourier Features）展开：
+
+$$
+\\begin{align}
+\\exp\\!\\left(\\frac{\\inner{\\bm{q}}{\\bm{k}_i}}{\\sqrt{d}}\\right) &= \\exp\\!\\left(\\frac{\\norm{\\bm{q}}_2^2 + \\norm{\\bm{k}_i}_2^2}{2\\sqrt{d}}\\right) \\exp\\!\\left(-\\frac{\\norm{\\bm{q} - \\bm{k}_i}_2^2}{2\\sqrt{d}}\\right) \\nonumber \\\\
+&\\approx \\inner{\\phi(\\bm{q})}{\\phi(\\bm{k}_i)}_{\\mathcal{H}}
+\\label{eq:kernel-approx}
+\\end{align}
+$$
+
+当核空间 $\\mathcal{H}$ 维数有限时，虽然可以将历史信息折叠为递归状态 $\\bm{S}_t = \\gamma_t \\bm{S}_{t-1} + \\phi(\\bm{k}_t)\\bm{v}_t^\\top$，但其秩至多为 $\\operatorname{rank}(\\bm{S}_t) \\le \\dim(\\mathcal{H})$，在需要进行精确空间定位的长视频问答任务中会出现严重的**记忆混叠（Memory Aliasing）**。
+
+---
+
+## 5. 递归世界模型中的混合记忆更新算法
+
+结合上述理论，我们在工程实现中可以将**精确多粒度稀疏缓存**与**低秩残差状态**结合，形成如下更新算法：
+
+\`\`\`python
+import torch
+import torch.nn.functional as F
+
+def mukv_hybrid_update(
+    k_cache: torch.Tensor,   # [B_cur, d]
+    v_cache: torch.Tensor,   # [B_cur, d]
+    log_mult: torch.Tensor,  # [B_cur, 1] 对数多重度偏置 \\mu_m = \\log |S_m|
+    k_new: torch.Tensor,     # [M, d] 当前帧新到达的 Patch Keys
+    v_new: torch.Tensor,     # [M, d] 当前帧新到达的 Patch Values
+    budget: int = 1024,
+):
+    k_all = torch.cat([k_cache, k_new], dim=0)
+    v_all = torch.cat([v_cache, v_new], dim=0)
+    m_all = torch.cat([log_mult, torch.zeros(k_new.size(0), 1, device=k_new.device)], dim=0)
+    if k_all.size(0) <= budget:
+        return k_all, v_all, m_all
+
+    sim = (F.normalize(k_all[:-1], dim=-1) * F.normalize(k_all[1:], dim=-1)).sum(dim=-1)
+    _, keep_idx = torch.topk(sim, k=budget, largest=False)
+    keep_idx = keep_idx.sort().values
+    return k_all[keep_idx], v_all[keep_idx], m_all[keep_idx]
+\`\`\`
+
+---
+
+## 6. 总结与开放问题
+
+1. **无偏合并准则**：定理 1 证明了在合并多粒度 KV 簇时，必须引入对数簇大小偏置 $\\mu_m = \\log |S_m|$（见式 $\\eqref{eq:lipschitz-bound}$），否则软最大值的配分函数会发生系统性偏移。
+2. **非均匀时间分辨率**：引理 1 给出了幂律记忆衰减下的最优缓存密度分布 $\\rho^*(\\tau) \\propto \\tau^{-\\gamma/(\\gamma+2)}$（见式 $\\eqref{eq:optimal-density}$），从第一性原理上解释了三级金字塔设计的合理性。`,
+    };
+
+    btnLoadDemo?.addEventListener("click", () => {
+      if (metaTitle) metaTitle.value = DEMO_TEMPLATE.title;
+      if (metaSlug) metaSlug.value = DEMO_TEMPLATE.slug;
+      if (metaCategory) metaCategory.value = DEMO_TEMPLATE.category;
+      if (metaTags) metaTags.value = DEMO_TEMPLATE.tags;
+      if (metaSummary) metaSummary.value = DEMO_TEMPLATE.summary;
+      if (editor) editor.value = DEMO_TEMPLATE.body;
+      slugManuallyEdited = true;
+      renderPreview();
+      saveLocalAutosave();
+    });
+
+    // LocalStorage Autosave & Restore
+    function saveLocalAutosave() {
+      if (selectExisting?.value !== "__new__") return;
+      const state = {
+        title: metaTitle?.value || "",
+        slug: metaSlug?.value || "",
+        category: metaCategory?.value || "Notes",
+        date: metaDate?.value || todayStr,
+        tags: metaTags?.value || "",
+        summary: metaSummary?.value || "",
+        body: editor?.value || "",
+      };
+      localStorage.setItem(STORAGE_DRAFT_KEY, JSON.stringify(state));
+    }
+
+    const restoreAutosaveOrUrlSlug = () => {
+      const params = new URLSearchParams(window.location.search);
+      const urlSlug = params.get("slug");
+      if (urlSlug) {
+        fetchExistingPosts(urlSlug);
+        return;
+      }
+
+      fetchExistingPosts();
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_DRAFT_KEY) || "null");
+        if (saved && (saved.title || saved.body)) {
+          if (metaTitle) metaTitle.value = saved.title || "";
+          if (metaSlug) metaSlug.value = saved.slug || "";
+          if (metaCategory) metaCategory.value = saved.category || "Notes";
+          if (metaDate) metaDate.value = saved.date || todayStr;
+          if (metaTags) metaTags.value = saved.tags || "";
+          if (metaSummary) metaSummary.value = saved.summary || "";
+          if (editor) editor.value = saved.body || "";
+          renderPreview();
+          return;
+        }
+      } catch {}
+
+      renderPreview();
+    };
+
+    // Wait for MathJax / Marked to be ready, then render initial preview
+    window.addEventListener("load", () => {
+      restoreAutosaveOrUrlSlug();
+      setTimeout(renderPreview, 400);
+    });
+    restoreAutosaveOrUrlSlug();
+  })();
+</script>

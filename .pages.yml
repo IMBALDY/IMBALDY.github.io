@@ -172,10 +172,9 @@ content:
         options: { media: images, path: public/images/writing, rename: true }
       - { name: coverAlt, label: 封面替代文字, type: string }
       - name: body
-        label: 正文
-        type: rich-text
+        label: 正文（支持 Markdown + LaTeX 公式）
+        type: text
         required: true
-        options: { media: images, path: public/images/writing, rename: true, switcher: true }
 
 settings:
   content:

@@ -1,6 +1,8 @@
 ---
 import type { CollectionEntry } from "astro:content";
 import { render } from "astro:content";
+import GiscusComments from "../../components/GiscusComments.astro";
+import MathJaxLoader from "../../components/MathJaxLoader.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { estimateReadingTime, formatDate, getWriting, slugify } from "../../lib/content";
 
@@ -26,12 +28,14 @@ const minutes = estimateReadingTime(post.body);
   image={post.data.cover}
   type="article"
 >
+  <MathJaxLoader />
   <article class="article-shell shell">
     <header class="article-header">
       <div class="writing-card-topline">
         <a class="category-label" href={`/writing/category/${slugify(post.data.category)}/`}>{post.data.category}</a>
         {post.data.demo && <span class="demo-label">Demo</span>}
         {post.data.draft && <span class="draft-label">Local draft</span>}
+        <a class="studio-edit-pill" href={`/writing/editor/?slug=${encodeURIComponent(post.id)}`}>Edit in Studio ✎</a>
       </div>
       <h1>{post.data.title}</h1>
       <p class="article-summary">{post.data.summary}</p>
@@ -62,7 +66,10 @@ const minutes = estimateReadingTime(post.body);
     )}
 
     <div class="article-grid">
-      <div class="prose"><Content /></div>
+      <div class="prose kexue-prose">
+        <Content />
+        <GiscusComments />
+      </div>
       {tocHeadings.length > 0 && (
         <aside class="article-toc">
           <p>On this page</p>

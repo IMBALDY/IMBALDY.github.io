@@ -1,0 +1,96 @@
+---
+/**
+ * Su Jianlin (kexue.fm) style MathJax 3 configuration:
+ * - AMS auto-numbering (\begin{equation}, \begin{align}, \label, \eqref)
+ * - `notranslate` injection via renderActions to prevent browser translation corruption
+ * - Built-in research macros (\bm, \R, \E, \argmin, \argmax, \KL, \norm, etc.)
+ * - Responsive overflow handling for wide matrices and multi-line derivations
+ */
+---
+
+<script is:inline>
+  window.MathJax = {
+    loader: {
+      load: ["[tex]/boldsymbol", "[tex]/mathtools"],
+    },
+    tex: {
+      packages: { "[+]": ["boldsymbol", "mathtools"] },
+      inlineMath: [
+        ["\\(", "\\)"],
+        ["$", "$"],
+      ],
+      displayMath: [
+        ["\\[", "\\]"],
+        ["$$", "$$"],
+      ],
+      processEscapes: true,
+      processEnvironments: true,
+      tags: "ams",
+      tagSide: "right",
+      tagIndent: "0.8em",
+      macros: {
+        bm: ["\\boldsymbol{#1}", 1],
+        R: "\\mathbb{R}",
+        N: "\\mathbb{N}",
+        Z: "\\mathbb{Z}",
+        C: "\\mathbb{C}",
+        E: "\\mathbb{E}",
+        P: "\\mathbb{P}",
+        Var: "\\operatorname{Var}",
+        Cov: "\\operatorname{Cov}",
+        KL: "\\operatorname{KL}",
+        Tr: "\\operatorname{Tr}",
+        diag: "\\operatorname{diag}",
+        argmin: "\\operatorname*{arg\\,min}",
+        argmax: "\\operatorname*{arg\\,max}",
+        norm: ["\\left\\lVert #1 \\right\\rVert", 1],
+        abs: ["\\left\\lvert #1 \\right\\rvert", 1],
+        inner: ["\\left\\langle #1, #2 \\right\\rangle", 2],
+        dd: "\\,\\mathrm{d}",
+      },
+    },
+    chtml: {
+      scale: 1,
+      minScale: 0.5,
+      matchFontHeight: true,
+      displayAlign: "center",
+    },
+    options: {
+      skipHtmlTags: [
+        "script",
+        "noscript",
+        "style",
+        "textarea",
+        "pre",
+        "code",
+        "annotation",
+        "annotation-xml",
+      ],
+      renderActions: {
+        addNoTranslate: [
+          200,
+          (doc) => {
+            for (const math of doc.math) {
+              if (math.typesetRoot) {
+                math.typesetRoot.classList.add("notranslate");
+                math.typesetRoot.setAttribute("translate", "no");
+              }
+            }
+          },
+          (math) => {
+            if (math.typesetRoot) {
+              math.typesetRoot.classList.add("notranslate");
+              math.typesetRoot.setAttribute("translate", "no");
+            }
+          },
+        ],
+      },
+    },
+  };
+</script>
+<script
+  is:inline
+  id="MathJax-script"
+  async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"
+></script>
