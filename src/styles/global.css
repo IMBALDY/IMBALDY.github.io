@@ -364,25 +364,79 @@ button { font: inherit; }
   border-bottom-color: var(--indigo);
 }
 
-/* Theorem / Lemma / Proposition Box (Kexue.fm Blue/Teal Callout) */
-.kexue-prose .theorem {
-  margin: 1.75rem 0;
-  padding: 1.15rem 1.35rem;
+/* Academic Callout Boxes: Definition, Theorem, Lemma, Proposition, Example, Solution */
+.kexue-prose .theorem,
+.kexue-prose .definition,
+.kexue-prose .lemma,
+.kexue-prose .proposition,
+.kexue-prose .example,
+.kexue-prose .solution {
+  margin: 1.65rem 0;
+  padding: 1.1rem 1.35rem;
   border-left: 4px solid var(--teal);
   border-radius: 0 0.85rem 0.85rem 0;
-  background: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.76);
   box-shadow: 0 6px 20px rgba(28, 85, 58, 0.06);
 }
-.kexue-prose .theorem-title {
-  margin-bottom: 0.55rem;
+.kexue-prose .theorem-title,
+.kexue-prose .box-title {
+  margin-bottom: 0.5rem;
   font-family: var(--sans);
-  font-size: 0.96rem;
+  font-size: 0.95rem;
   font-weight: 740;
   color: var(--teal);
   letter-spacing: -0.01em;
 }
-.kexue-prose .theorem > :last-child {
+.kexue-prose .definition {
+  border-left-color: #0d9488;
+  background: rgba(240, 253, 250, 0.78);
+}
+.kexue-prose .definition .box-title { color: #0f766e; }
+
+.kexue-prose .lemma {
+  border-left-color: #b45309;
+  background: rgba(255, 251, 235, 0.8);
+}
+.kexue-prose .lemma .box-title { color: #b45309; }
+
+.kexue-prose .proposition {
+  border-left-color: #1d4ed8;
+  background: rgba(239, 246, 255, 0.8);
+}
+.kexue-prose .proposition .box-title { color: #1d4ed8; }
+
+.kexue-prose .example {
+  border: 1px solid var(--line-strong);
+  border-left: 4px solid #4338ca;
+  background: rgba(248, 250, 252, 0.85);
+}
+.kexue-prose .example .box-title { color: #4338ca; }
+
+.kexue-prose .solution {
+  border-left: 4px dashed var(--teal);
+  background: rgba(242, 249, 244, 0.82);
+}
+.kexue-prose .solution .box-title { color: var(--teal); }
+
+.kexue-prose .theorem > :last-child,
+.kexue-prose .definition > :last-child,
+.kexue-prose .lemma > :last-child,
+.kexue-prose .proposition > :last-child,
+.kexue-prose .example > :last-child,
+.kexue-prose .solution > :last-child {
   margin-bottom: 0;
+}
+
+/* Interactive 2D / 3D Plotly Mathematical Charts */
+.kexue-prose .plotly-chart {
+  width: 100%;
+  min-height: 24rem;
+  margin: 1.65rem 0;
+  padding: 0.5rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 0.9rem;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 6px 20px rgba(28, 85, 58, 0.05);
 }
 
 /* Collapsible Detailed Proof / Derivation Block */
@@ -719,20 +773,27 @@ button { font: inherit; }
 
 .studio-toolbar {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0.65rem 0.9rem;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.75rem 1rem;
   border: 1px solid var(--line);
-  border-radius: 0.85rem;
-  background: rgba(248, 252, 248, 0.85);
+  border-radius: 0.9rem;
+  background: rgba(248, 252, 248, 0.88);
   margin-bottom: 1rem;
 }
+.studio-toolbar-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.42rem;
+}
 .studio-toolbar-label {
-  font-size: 0.75rem;
-  font-weight: 700;
+  min-width: 4.5rem;
+  font-size: 0.73rem;
+  font-weight: 740;
   color: var(--muted);
-  margin-right: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 .studio-tool-btn {
   padding: 0.32rem 0.68rem;

@@ -1,9 +1,9 @@
 ---
+import { getCollection } from "astro:content";
 import MathJaxLoader from "../../components/MathJaxLoader.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import { getWriting } from "../../lib/content";
 
-const posts = await getWriting();
+const posts = await getCollection("writing");
 const bundledPosts = Object.fromEntries(
   posts.map((post) => [
     `src/content/writing/${post.id}.md`,
@@ -133,18 +133,38 @@ const bundledPostsJson = JSON.stringify(bundledPosts).replace(/</g, "\\u003c");
 
     <!-- Quick insert scientific toolbar -->
     <div class="studio-toolbar" aria-label="Markdown & LaTeX quick insert toolbar">
-      <span class="studio-toolbar-label">快捷插入：</span>
-      <button type="button" data-insert="inline-math" class="studio-tool-btn">$x_i$ 行内公式</button>
-      <button type="button" data-insert="equation" class="studio-tool-btn">🔢 自动编号公式 \begin&#123;equation&#125;</button>
-      <button type="button" data-insert="align" class="studio-tool-btn">📐 多行推导 \begin&#123;align&#125;</button>
-      <button type="button" data-insert="matrix" class="studio-tool-btn">🎛 矩阵 \begin&#123;bmatrix&#125;</button>
-      <button type="button" data-insert="theorem" class="studio-tool-btn">📘 定理/引理框 (.theorem)</button>
-      <button type="button" data-insert="derivation" class="studio-tool-btn">📂 折叠详细证明 (.derivation)</button>
-      <button type="button" data-insert="note-box" class="studio-tool-btn">💡 核心结论框 (.kexue-note)</button>
-      <label class="studio-tool-btn studio-upload-label">
-        🖼 上传/插入图片
-        <input type="file" id="input-upload-image" accept="image/*" hidden />
-      </label>
+      <div class="studio-toolbar-row">
+        <span class="studio-toolbar-label">结构模块：</span>
+        <button type="button" data-insert="definition" class="studio-tool-btn">📗 定义 (Definition)</button>
+        <button type="button" data-insert="theorem" class="studio-tool-btn">📘 定理 (Theorem)</button>
+        <button type="button" data-insert="lemma" class="studio-tool-btn">📙 引理 (Lemma)</button>
+        <button type="button" data-insert="proposition" class="studio-tool-btn">📕 命题/推论</button>
+        <button type="button" data-insert="example" class="studio-tool-btn">📝 例题 (Example)</button>
+        <button type="button" data-insert="solution" class="studio-tool-btn">✏️ 解答 (Solution)</button>
+        <button type="button" data-insert="derivation" class="studio-tool-btn">📂 证明 (折叠框)</button>
+        <button type="button" data-insert="note-box" class="studio-tool-btn">💡 核心直觉</button>
+      </div>
+      <div class="studio-toolbar-row">
+        <span class="studio-toolbar-label">数学算子：</span>
+        <button type="button" data-insert="inline-math" class="studio-tool-btn">$x_i$ 行内公式</button>
+        <button type="button" data-insert="equation" class="studio-tool-btn">🔢 编号公式</button>
+        <button type="button" data-insert="align" class="studio-tool-btn">📐 多行推导</button>
+        <button type="button" data-insert="derivative" class="studio-tool-btn">∂ 求导 / 偏导 / 梯度</button>
+        <button type="button" data-insert="integral" class="studio-tool-btn">∫ 积分 / 重积分</button>
+        <button type="button" data-insert="sum-limit" class="studio-tool-btn">∑ 求和 / 极限</button>
+        <button type="button" data-insert="matrix" class="studio-tool-btn">🎛 矩阵 / 向量</button>
+        <button type="button" data-insert="cases" class="studio-tool-btn">&#123; 分段函数</button>
+        <button type="button" data-insert="norm-inner" class="studio-tool-btn">⟨x,y⟩ 内积 / 范数</button>
+      </div>
+      <div class="studio-toolbar-row">
+        <span class="studio-toolbar-label">图形绘制：</span>
+        <button type="button" data-insert="plot-2d" class="studio-tool-btn">📈 2D 平面向量图</button>
+        <button type="button" data-insert="plot-3d" class="studio-tool-btn">🧊 3D 空间向量/平面图</button>
+        <label class="studio-tool-btn studio-upload-label">
+          🖼 上传/插入图片
+          <input type="file" id="input-upload-image" accept="image/*" hidden />
+        </label>
+      </div>
     </div>
 
     <!-- Split Editor & Live Preview -->
@@ -371,9 +391,16 @@ const bundledPostsJson = JSON.stringify(bundledPosts).replace(/</g, "\\u003c");
       const words = raw.trim().split(/\s+/).filter(Boolean).length;
       if (wordCountEl) wordCountEl.textContent = `${words} words`;
 
-      // Step 1: Protect fenced code blocks and inline code first so $ inside code is untouched
+      // Step 1: Extract ```plot blocks for interactive 2D/3D charts, and protect other code blocks
+      const plotPlaceholders = [];
+      let text = raw.replace(/```plot\s*\r?\n([\s\S]*?)```/g, (_, plotJson) => {
+        const id = `@@PLOT_BLOCK_${plotPlaceholders.length}@@`;
+        plotPlaceholders.push(plotJson.trim());
+        return id;
+      });
+
       const codePlaceholders = [];
-      let text = raw.replace(/```[\s\S]*?```|`[^`\n]+`/g, (match) => {
+      text = text.replace(/```[\s\S]*?```|`[^`\n]+`/g, (match) => {
         const id = `@@CODE_BLOCK_${codePlaceholders.length}@@`;
         codePlaceholders.push(match);
         return id;
@@ -412,7 +439,17 @@ const bundledPostsJson = JSON.stringify(bundledPosts).replace(/</g, "\\u003c");
       // Step 4: Parse Markdown to HTML
       let html = window.marked ? window.marked.parse(text) : text;
 
-      // Step 5: Restore Math placeholders as clean .notranslate containers
+      // Step 5: Restore Math & Plot placeholders as clean .notranslate containers
+      html = html.replace(/@@PLOT_BLOCK_(\d+)@@/g, (_, idx) => {
+        const rawJson = plotPlaceholders[Number(idx)] || "{}";
+        const escapedAttr = rawJson
+          .replace(/&/g, "&amp;")
+          .replace(/"/g, "&quot;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+        return `<div class="plotly-chart notranslate" translate="no" data-plot="${escapedAttr}"></div>`;
+      });
+
       html = html.replace(/@@MATH_NODE_(\d+)@@/g, (_, idx) => {
         const item = mathPlaceholders[Number(idx)];
         if (!item) return "";
@@ -427,6 +464,7 @@ const bundledPostsJson = JSON.stringify(bundledPosts).replace(/</g, "\\u003c");
 
       if (preview) {
         preview.innerHTML = html;
+        window.renderKexuePlots?.(preview);
         syncEditorToPreview();
       }
 
@@ -462,19 +500,68 @@ const bundledPostsJson = JSON.stringify(bundledPosts).replace(/</g, "\\u003c");
     // Quick-Insert Scientific Snippets
     // =========================================================================
     const snippets = {
-      "inline-math": "$\\bm{x}_t \\in \\R^d$",
-      equation:
-        "\n$$\n\\begin{equation}\n\\mathcal{L}(\\theta) = \\E_{\\bm{x} \\sim p_{\\text{data}}} \\left[ -\\log p_\\theta(\\bm{x}_t \\mid \\bm{x}_{<t}) \\right]\n\\label{eq:loss}\n\\end{equation}\n$$\n由式 $\\eqref{eq:loss}$ 可知，",
-      align:
-        "\n$$\n\\begin{align}\n\\KL(q(\\bm{z}\\mid\\bm{x}) \\,\\|\\, p(\\bm{z})) &= \\int q(\\bm{z}\\mid\\bm{x}) \\log \\frac{q(\\bm{z}\\mid\\bm{x})}{p(\\bm{z})} \\dd\\bm{z} \\label{eq:kl-def} \\\\\n&= \\E_{q(\\bm{z}\\mid\\bm{x})}[\\log q(\\bm{z}\\mid\\bm{x})] - \\E_{q(\\bm{z}\\mid\\bm{x})}[\\log p(\\bm{z})]\n\\end{align}\n$$\n",
-      matrix:
-        "\n$$\n\\bm{A} = \\begin{bmatrix}\na_{1,1} & a_{1,2} & \\cdots & a_{1,n} \\\\\na_{2,1} & a_{2,2} & \\cdots & a_{2,n} \\\\\n\\vdots & \\vdots & \\ddots & \\vdots \\\\\na_{m,1} & a_{m,2} & \\cdots & a_{m,n}\n\\end{bmatrix}\n$$\n",
+      // 1. Structural Callout Boxes
+      definition:
+        '\n<div class="definition">\n<div class="box-title">定义 1（线性空间 / 向量空间）</div>\n\n设 $V$ 是一个非空集合，$\\R$ 为实数域。若在 $V$ 上定义了**向量加法** $\\bm{u} + \\bm{v}$ 与**标量乘法** $c\\bm{u}$，且满足加法交换律、结合律及数乘分配律等 8 条公理，则称 $V$ 为实数域 $\\R$ 上的**向量空间（Vector Space）**。\n\n</div>\n',
       theorem:
-        '\n<div class="theorem">\n<div class="theorem-title">定理 1（记忆压缩率下界）</div>\n\n设视频流特征序列为 $\\{\\bm{k}_t, \\bm{v}_t\\}_{t=1}^T$，在给定重构误差上界 $\\epsilon > 0$ 下，最优多粒度 KV 缓存的秩满足：\n$$\n\\operatorname{rank}(\\tilde{\\bm{K}}) \\ge \\Omega\\!\\left(\\frac{I(\\bm{X}_{1:T}; \\bm{Y})}{\\log(1 + 1/\\epsilon)}\\right)\n$$\n</div>\n',
+        '\n<div class="theorem">\n<div class="theorem-title">定理 1（秩-零化度定理 / 维数公式）</div>\n\n设 $\\mathcal{T}: V \\to W$ 是有限维向量空间之间的线性映射，则其像空间（列空间）的维数与核空间（零空间）的维数之和等于定义域的维数：\n$$\n\\begin{equation}\n\\operatorname{rank}(\\mathcal{T}) + \\dim(\\operatorname{Ker}(\\mathcal{T})) = \\dim(V)\n\\label{eq:rank-nullity}\n\\end{equation}\n$$\n</div>\n',
+      lemma:
+        '\n<div class="lemma">\n<div class="box-title">引理 1（Cauchy-Schwarz 不等式）</div>\n\n对于内积空间中的任意两个向量 $\\bm{x}, \\bm{y} \\in \\R^n$，恒有：\n$$\n\\abs{\\inner{\\bm{x}}{\\bm{y}}} \\le \\norm{\\bm{x}}_2 \\cdot \\norm{\\bm{y}}_2\n$$\n当且仅当 $\\bm{x}$ 与 $\\bm{y}$ 线性相关（共线）时等号成立。\n\n</div>\n',
+      proposition:
+        '\n<div class="proposition">\n<div class="box-title">命题 1（正交投影的最优逼近性质）</div>\n\n设 $U \\subset \\R^n$ 为子空间，$\\bm{P}_U = \\bm{A}(\\bm{A}^\\top \\bm{A})^{-1}\\bm{A}^\\top$ 为其正交投影矩阵，则对任意 $\\bm{b} \\in \\R^n$，有 $\\argmin_{\\bm{u} \\in U} \\norm{\\bm{b} - \\bm{u}}_2 = \\bm{P}_U \\bm{b}$。\n\n</div>\n',
+      example:
+        '\n<div class="example">\n<div class="box-title">例题 1（二维平面上的旋转与剪切变换）</div>\n\n已知二维平面上的基向量 $\\bm{e}_1 = (1, 0)^\\top$ 和 $\\bm{e}_2 = (0, 1)^\\top$ 经过线性变换 $\\bm{A}$ 后分别变为 $\\bm{a}_1 = (2, 1)^\\top$ 和 $\\bm{a}_2 = (-1, 2)^\\top$。试写出变换矩阵 $\\bm{A}$，并求向量 $\\bm{x} = (1, 1)^\\top$ 变换后的坐标。\n\n</div>\n',
+      solution:
+        '\n<div class="solution">\n<div class="box-title">解答（Solution）</div>\n\n**解：** 由线性变换的基本性质，变换矩阵 $\\bm{A}$ 的各列即为基向量变换后的像：\n$$\n\\bm{A}\\bm{x} = \\begin{bmatrix} 2 & -1 \\\\ 1 & 2 \\end{bmatrix} \\begin{bmatrix} 1 \\\\ 1 \\end{bmatrix} = 1 \\cdot \\begin{bmatrix} 2 \\\\ 1 \\end{bmatrix} + 1 \\cdot \\begin{bmatrix} -1 \\\\ 2 \\end{bmatrix} = \\begin{bmatrix} 1 \\\\ 3 \\end{bmatrix}\n$$\n\n</div>\n',
       derivation:
-        '\n<details class="derivation">\n<summary>展开查看详细数学推导（Proof &amp; Derivation）</summary>\n<div class="derivation-body">\n\n**证明：** 对目标泛函关于 $\\bm{Q}_t$ 求一阶变分，利用矩阵迹的循环性质 $\\Tr(\\bm{A}\\bm{B}) = \\Tr(\\bm{B}\\bm{A})$，可得：\n$$\n\\begin{equation}\n\\frac{\\partial \\mathcal{J}}{\\partial \\bm{K}_t} = 2(\\bm{K}_t \\bm{K}_t^\\top - \\bm{I})\\bm{K}_t = \\bm{0}\n\\end{equation}\n$$\n证毕 $\\blacksquare$\n\n</div>\n</details>\n',
+        '\n<details class="derivation">\n<summary>展开查看详细证明过程（Proof &amp; Derivation）</summary>\n<div class="derivation-body">\n\n**证明：** 对目标函数关于参数向量求一阶导数并令其为零：\n$$\n\\begin{equation}\n\\nabla_{\\bm{x}} \\left( \\frac{1}{2} \\norm{\\bm{A}\\bm{x} - \\bm{b}}_2^2 \\right) = \\bm{A}^\\top (\\bm{A}\\bm{x} - \\bm{b}) = \\bm{0}\n\\end{equation}\n$$\n整理即得正规方程 $\\bm{A}^\\top \\bm{A}\\bm{x} = \\bm{A}^\\top \\bm{b}$。证毕 $\\blacksquare$\n\n</div>\n</details>\n',
       "note-box":
-        '\n<div class="kexue-note">\n<strong>核心直觉（Physical Intuition）：</strong> 从动力系统的视角看，注意力机制中的 Value 缓存本质上是在维护状态空间的低维流形投影。\n</div>\n',
+        '\n<div class="kexue-note">\n\n**几何直觉（Geometric Intuition）：** 矩阵乘法 $\\bm{A}\\bm{x}$ 并不是枯燥的“行乘列”，从列视角看，它是对矩阵 $\\bm{A}$ 各列向量的**线性组合**；从空间视角看，它是把原空间的网格进行旋转与拉伸。\n\n</div>\n',
+
+      // 2. Math & Calculus Snippets
+      "inline-math": "$\\bm{x} \\in \\R^n$",
+      equation:
+        "\n$$\n\\begin{equation}\n\\bm{y} = \\sigma(\\bm{W}\\bm{x} + \\bm{b})\n\\label{eq:linear-layer}\n\\end{equation}\n$$\n由式 $\\eqref{eq:linear-layer}$ 可知，",
+      align:
+        "\n$$\n\\begin{align}\n\\mathcal{L}(\\bm{W}) &= \\frac{1}{2N} \\sum_{i=1}^{N} \\norm{\\bm{W}\\bm{x}_i - \\bm{y}_i}_2^2 + \\frac{\\lambda}{2} \\norm{\\bm{W}}_F^2 \\label{eq:ridge-loss} \\\\\n&= \\frac{1}{2N} \\Tr\\!\\left((\\bm{X}\\bm{W}^\\top - \\bm{Y})^\\top (\\bm{X}\\bm{W}^\\top - \\bm{Y})\\right) + \\frac{\\lambda}{2} \\Tr(\\bm{W}^\\top \\bm{W})\n\\end{align}\n$$\n",
+      derivative:
+        "\n$$\n\\pd{\\mathcal{L}}{\\bm{W}} = \\pd{\\mathcal{L}}{\\bm{z}} \\cdot \\pd{\\bm{z}}{\\bm{W}}, \\qquad \\nabla_{\\bm{x}} f(\\bm{x}) = \\left( \\pd{f}{x_1}, \\pd{f}{x_2}, \\dots, \\pd{f}{x_n} \\right)^\\top, \\qquad \\od{y}{x} = f'(x)\n$$\n",
+      integral:
+        "\n$$\n\\int_{-\\infty}^{+\\infty} f(x) \\dd x = 1, \\qquad \\iint_{\\Omega} \\nabla \\cdot \\bm{F} \\dd x \\dd y = \\oint_{\\partial \\Omega} \\bm{F} \\cdot \\bm{n} \\dd s\n$$\n",
+      "sum-limit":
+        "\n$$\n\\lim_{n \\to \\infty} \\sum_{i=1}^{n} \\alpha_i \\bm{v}_i = \\int_{0}^{1} \\alpha(t) \\bm{v}(t) \\dd t, \\qquad \\theta^* = \\argmin_{\\theta \\in \\Theta} \\E_{\\bm{x} \\sim p_{\\text{data}}}[\\mathcal{L}(\\bm{x}; \\theta)]\n$$\n",
+      matrix:
+        "\n$$\n\\bm{A} = \\begin{bmatrix}\na_{1,1} & a_{1,2} & \\cdots & a_{1,n} \\\\\na_{2,1} & a_{2,2} & \\cdots & a_{2,n} \\\\\n\\vdots & \\vdots & \\ddots & \\vdots \\\\\na_{m,1} & a_{m,2} & \\cdots & a_{m,n}\n\\end{bmatrix}, \\qquad \\bm{x} = \\begin{bmatrix} x_1 \\\\ x_2 \\\\ \\vdots \\\\ x_n \\end{bmatrix}\n$$\n",
+      cases:
+        "\n$$\n\\operatorname{ReLU}(x) = \\begin{cases}\nx, & \\text{if } x > 0, \\\\\n0, & \\text{if } x \\le 0.\n\\end{cases}\n$$\n",
+      "norm-inner":
+        "$\\inner{\\bm{u}}{\\bm{v}} = \\bm{u}^\\top \\bm{v} = \\norm{\\bm{u}}_2 \\norm{\\bm{v}}_2 \\cos\\theta$",
+
+      // 3. Interactive 2D & 3D Plots
+      "plot-2d": `\n\`\`\`plot
+{
+  "type": "2d-vectors",
+  "title": "二维平面向量的线性组合：a + b",
+  "vectors": [
+    { "from": [0, 0], "to": [2, 1], "label": "a = (2, 1)", "color": "#226b4f" },
+    { "from": [0, 0], "to": [1, 2], "label": "b = (1, 2)", "color": "#2563eb" },
+    { "from": [2, 1], "to": [3, 3], "label": "", "color": "#94a3b8", "dash": "dot" },
+    { "from": [0, 0], "to": [3, 3], "label": "a + b = (3, 3)", "color": "#ad263b" }
+  ]
+}
+\`\`\`\n`,
+      "plot-3d": `\n\`\`\`plot
+{
+  "type": "3d-vectors",
+  "title": "三维空间向量与张成子空间 (Span Plane)",
+  "plane": { "normal": [1, -1, 1], "label": "Span(v1, v2)" },
+  "vectors": [
+    { "from": [0, 0, 0], "to": [2, 1, -1], "label": "v1 = (2,1,-1)", "color": "#226b4f" },
+    { "from": [0, 0, 0], "to": [-1, 1, 2], "label": "v2 = (-1,1,2)", "color": "#2563eb" },
+    { "from": [0, 0, 0], "to": [1, 2, 1], "label": "v1 + v2", "color": "#ad263b" }
+  ]
+}
+\`\`\`\n`,
     };
 
     document.querySelectorAll("[data-insert]").forEach((btn) => {

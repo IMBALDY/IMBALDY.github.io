@@ -1,10 +1,10 @@
 ---
 /**
- * Su Jianlin (kexue.fm) style MathJax 3 configuration:
+ * MathJax 3 & Interactive 2D/3D Plotting Loader:
  * - AMS auto-numbering (\begin{equation}, \begin{align}, \label, \eqref)
  * - `notranslate` injection via renderActions to prevent browser translation corruption
- * - Built-in research macros (\bm, \R, \E, \argmin, \argmax, \KL, \norm, etc.)
- * - Responsive overflow handling for wide matrices and multi-line derivations
+ * - Built-in research macros (\bm, \R, \E, \argmin, \argmax, \KL, \norm, \dd, etc.)
+ * - On-demand Plotly.js 2D/3D vector & function rendering for ```plot blocks
  */
 ---
 
@@ -41,12 +41,16 @@
         KL: "\\operatorname{KL}",
         Tr: "\\operatorname{Tr}",
         diag: "\\operatorname{diag}",
+        rank: "\\operatorname{rank}",
+        span: "\\operatorname{span}",
         argmin: "\\operatorname*{arg\\,min}",
         argmax: "\\operatorname*{arg\\,max}",
         norm: ["\\left\\lVert #1 \\right\\rVert", 1],
         abs: ["\\left\\lvert #1 \\right\\rvert", 1],
         inner: ["\\left\\langle #1, #2 \\right\\rangle", 2],
         dd: "\\,\\mathrm{d}",
+        pd: ["\\frac{\\partial #1}{\\partial #2}", 2],
+        od: ["\\frac{\\mathrm{d} #1}{\\mathrm{d} #2}", 2],
       },
     },
     chtml: {
@@ -87,6 +91,202 @@
       },
     },
   };
+
+  // Lazy-loaded 2D / 3D Mathematical Plotting Helper (Plotly.js)
+  let plotlyLoadPromise = null;
+  const ensurePlotly = () => {
+    if (window.Plotly) return Promise.resolve(window.Plotly);
+    if (plotlyLoadPromise) return plotlyLoadPromise;
+    plotlyLoadPromise = new Promise((resolve, reject) => {
+      const s = document.createElement("script");
+      s.src = "https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.35.2/plotly.min.js";
+      s.async = true;
+      s.onload = () => resolve(window.Plotly);
+      s.onerror = reject;
+      document.head.appendChild(s);
+    });
+    return plotlyLoadPromise;
+  };
+
+  const buildPlotSpec = (cfg) => {
+    const palette = ["#226b4f", "#ad263b", "#2563eb", "#d97706", "#7c3aed"];
+
+    if (cfg.type === "2d-vectors") {
+      const vectors = Array.isArray(cfg.vectors) ? cfg.vectors : [];
+      const data = [];
+      const annotations = [];
+      let maxCoord = 3;
+
+      vectors.forEach((v, idx) => {
+        const from = v.from || [0, 0];
+        const to = v.to || [1, 1];
+        const color = v.color || palette[idx % palette.length];
+        maxCoord = Math.max(maxCoord, Math.abs(from[0]), Math.abs(from[1]), Math.abs(to[0]), Math.abs(to[1]));
+
+        data.push({
+          type: "scatter",
+          mode: "lines+markers",
+          name: v.label || `v${idx + 1}`,
+          x: [from[0], to[0]],
+          y: [from[1], to[1]],
+          line: { color, width: 3, dash: v.dash || "solid" },
+          marker: { size: [4, 8], color },
+        });
+
+        annotations.push({
+          x: to[0],
+          y: to[1],
+          ax: from[0],
+          ay: from[1],
+          xref: "x",
+          yref: "y",
+          axref: "x",
+          ayref: "y",
+          text: "",
+          showarrow: true,
+          arrowhead: 2,
+          arrowsize: 1.2,
+          arrowwidth: 2.2,
+          arrowcolor: color,
+        });
+
+        if (v.label) {
+          annotations.push({
+            x: to[0] + (to[0] >= 0 ? 0.22 : -0.22),
+            y: to[1] + (to[1] >= 0 ? 0.22 : -0.22),
+            text: `<b>${v.label}</b>`,
+            showarrow: false,
+            font: { color, size: 13 },
+          });
+        }
+      });
+
+      const bound = Math.ceil(maxCoord + 1);
+      const range = cfg.range || [-bound, bound];
+      return {
+        data,
+        layout: {
+          title: cfg.title ? { text: cfg.title, font: { size: 15 } } : undefined,
+          margin: { l: 42, r: 24, t: cfg.title ? 44 : 20, b: 38 },
+          paper_bgcolor: "rgba(255,255,255,0)",
+          plot_bgcolor: "rgba(255,255,255,0.65)",
+          xaxis: { range, zeroline: true, zerolinewidth: 2, zerolinecolor: "#20251f", gridcolor: "rgba(32,37,31,0.12)" },
+          yaxis: { range, zeroline: true, zerolinewidth: 2, zerolinecolor: "#20251f", gridcolor: "rgba(32,37,31,0.12)", scaleanchor: "x", scaleratio: 1 },
+          annotations,
+          showlegend: true,
+          legend: { orientation: "h", y: -0.14 },
+        },
+      };
+    }
+
+    if (cfg.type === "3d-vectors") {
+      const vectors = Array.isArray(cfg.vectors) ? cfg.vectors : [];
+      const data = [];
+      let maxCoord = 3;
+
+      // Optional spanned plane z = a*x + b*y
+      if (cfg.plane && Array.isArray(cfg.plane.normal)) {
+        const [nx, ny, nz] = cfg.plane.normal;
+        if (Math.abs(nz) > 1e-6) {
+          const grid = [-3, -1.5, 0, 1.5, 3];
+          const zMat = grid.map((y) => grid.map((x) => -(nx * x + ny * y) / nz));
+          data.push({
+            type: "surface",
+            name: cfg.plane.label || "Span Plane",
+            x: grid,
+            y: grid,
+            z: zMat,
+            opacity: 0.25,
+            showscale: false,
+            colorscale: [
+              [0, "#226b4f"],
+              [1, "#dcebdd"],
+            ],
+          });
+        }
+      }
+
+      vectors.forEach((v, idx) => {
+        const from = v.from || [0, 0, 0];
+        const to = v.to || [1, 1, 1];
+        const color = v.color || palette[idx % palette.length];
+        maxCoord = Math.max(
+          maxCoord,
+          Math.abs(to[0]),
+          Math.abs(to[1]),
+          Math.abs(to[2])
+        );
+
+        data.push({
+          type: "scatter3d",
+          mode: "lines+markers+text",
+          name: v.label || `v${idx + 1}`,
+          x: [from[0], to[0]],
+          y: [from[1], to[1]],
+          z: [from[2], to[2]],
+          text: ["", v.label || ""],
+          textposition: "top center",
+          line: { color, width: 6 },
+          marker: { size: [2, 5], color },
+        });
+      });
+
+      const bound = Math.ceil(maxCoord + 1);
+      return {
+        data,
+        layout: {
+          title: cfg.title ? { text: cfg.title, font: { size: 15 } } : undefined,
+          margin: { l: 0, r: 0, t: cfg.title ? 40 : 10, b: 0 },
+          paper_bgcolor: "rgba(255,255,255,0)",
+          scene: {
+            xaxis: { title: "X", range: [-bound, bound], backgroundcolor: "rgba(240,246,241,0.5)", showbackground: true },
+            yaxis: { title: "Y", range: [-bound, bound], backgroundcolor: "rgba(240,246,241,0.5)", showbackground: true },
+            zaxis: { title: "Z", range: [-bound, bound], backgroundcolor: "rgba(240,246,241,0.5)", showbackground: true },
+            aspectmode: "cube",
+          },
+          legend: { orientation: "h", y: 0 },
+        },
+      };
+    }
+
+    return {
+      data: cfg.data || [],
+      layout: {
+        margin: { l: 40, r: 20, t: 36, b: 36 },
+        paper_bgcolor: "rgba(255,255,255,0)",
+        plot_bgcolor: "rgba(255,255,255,0.65)",
+        ...(cfg.layout || {}),
+      },
+    };
+  };
+
+  window.renderKexuePlots = async (root = document) => {
+    const nodes = [...root.querySelectorAll(".plotly-chart")];
+    if (nodes.length === 0) return;
+    try {
+      const Plotly = await ensurePlotly();
+      nodes.forEach((el) => {
+        try {
+          const raw = el.getAttribute("data-plot") || el.textContent || "{}";
+          const cfg = JSON.parse(raw);
+          const spec = buildPlotSpec(cfg);
+          el.innerHTML = "";
+          Plotly.newPlot(el, spec.data, spec.layout, {
+            responsive: true,
+            displaylogo: false,
+          });
+        } catch (err) {
+          el.innerHTML = `<p style="color:#ad263b;font-size:0.85rem;padding:0.75rem;">⚠️ 绘图 JSON 格式有误：${err.message}</p>`;
+        }
+      });
+    } catch (err) {
+      console.warn("Plotly load failed:", err);
+    }
+  };
+
+  window.addEventListener("DOMContentLoaded", () => {
+    window.renderKexuePlots(document);
+  });
 </script>
 <script
   is:inline

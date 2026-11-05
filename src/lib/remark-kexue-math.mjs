@@ -6,8 +6,8 @@ import { visit } from "unist-util-visit";
  *    clean HTML containers (<span class="math-inline notranslate"> and
  *    <div class="math-display notranslate">) so Shiki never touches them
  *    and Markdown never mangles _, *, \\, or {}.
- * 2. Support kexue.fm-style callout/derivation blocks using simple syntax
- *    or standard HTML (<div class="theorem">, <details class="derivation">).
+ * 2. Convert ```plot code blocks into interactive 2D/3D chart containers
+ *    (<div class="plotly-chart notranslate" data-plot="...">).
  */
 export default function remarkKexueMath() {
   return (tree) => {
@@ -35,8 +35,17 @@ export default function remarkKexueMath() {
           },
           hChildren: [{ type: "text", value: wrapped }],
         };
+      } else if (node.type === "code" && node.lang === "plot") {
+        node.data = {
+          hName: "div",
+          hProperties: {
+            className: ["plotly-chart", "notranslate"],
+            translate: "no",
+            "data-plot": node.value || "{}",
+          },
+          hChildren: [],
+        };
       }
     });
   };
 }
-
