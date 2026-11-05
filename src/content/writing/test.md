@@ -5,7 +5,6 @@ date: 2026-11-05
 category: Essay
 tags:
   - "test"
-draft: true
 ---
 
 这个实时渲染 感觉还不错
