@@ -1,7 +1,7 @@
 ---
 /**
  * Giscus academic comment section with native LaTeX ($...$ and $$...$$) support.
- * Pre-configured with repo `IMBALDY/IMBALDY.github.io` (repoId: R_kgDOQX1Vgw).
+ * Configured for `IMBALDY/IMBALDY.github.io` (repoId: R_kgDOQX1Vgw, General categoryId: DIC_kwDOQX1Vg84DKdmv).
  */
 interface Props {
   repo?: string;
@@ -14,7 +14,7 @@ const {
   repo = "IMBALDY/IMBALDY.github.io",
   repoId = "R_kgDOQX1Vgw",
   category = "General",
-  categoryId = "",
+  categoryId = "DIC_kwDOQX1Vg84DKdmv",
 } = Astro.props;
 ---
 
@@ -29,79 +29,23 @@ const {
     </p>
   </div>
 
-  <div
-    id="giscus-wrapper"
-    data-repo={repo}
-    data-repo-id={repoId}
-    data-category={category}
-    data-category-id={categoryId}
-  >
-    <div id="giscus-container"></div>
-    <div id="giscus-setup-hint" class="giscus-setup-hint" hidden>
-      <p>
-        <strong>💡 评论区待激活（仅需在 GitHub 点两下）：</strong>
-        读者评论（支持 LaTeX 公式渲染）基于 GitHub Discussions。要开启它：
-      </p>
-      <ol>
-        <li>
-          打开仓库设置 <a href="https://github.com/IMBALDY/IMBALDY.github.io/settings" target="_blank" rel="noopener noreferrer">GitHub Settings ↗</a>，向下滚动到 <strong>Features</strong>，勾选 <strong>Discussions</strong>。
-        </li>
-        <li>
-          访问 <a href="https://github.com/apps/giscus" target="_blank" rel="noopener noreferrer">Giscus App ↗</a> 点击 Install 并授权给 <code>IMBALDY.github.io</code> 仓库。
-        </li>
-      </ol>
-    </div>
+  <div id="giscus-wrapper">
+    <script
+      is:inline
+      src="https://giscus.app/client.js"
+      data-repo={repo}
+      data-repo-id={repoId}
+      data-category={category}
+      data-category-id={categoryId}
+      data-mapping="pathname"
+      data-strict="0"
+      data-reactions-enabled="1"
+      data-emit-metadata="0"
+      data-input-position="top"
+      data-theme="light"
+      data-lang="zh-CN"
+      crossorigin="anonymous"
+      async
+    ></script>
   </div>
 </section>
-
-<script is:inline>
-  (() => {
-    const wrapper = document.getElementById("giscus-wrapper");
-    const container = document.getElementById("giscus-container");
-    const hint = document.getElementById("giscus-setup-hint");
-    if (!wrapper || !container) return;
-
-    const repo = wrapper.dataset.repo || "IMBALDY/IMBALDY.github.io";
-    const repoId = wrapper.dataset.repoId || "R_kgDOQX1Vgw";
-    const category = wrapper.dataset.category || "General";
-    const categoryId = wrapper.dataset.categoryId || localStorage.getItem("giscus_category_id") || "";
-
-    const mountGiscus = (resolvedCategoryId) => {
-      const script = document.createElement("script");
-      script.src = "https://giscus.app/client.js";
-      script.async = true;
-      script.crossOrigin = "anonymous";
-      script.setAttribute("data-repo", repo);
-      script.setAttribute("data-repo-id", repoId);
-      script.setAttribute("data-category", category);
-      if (resolvedCategoryId) {
-        script.setAttribute("data-category-id", resolvedCategoryId);
-      }
-      script.setAttribute("data-mapping", "pathname");
-      script.setAttribute("data-strict", "0");
-      script.setAttribute("data-reactions-enabled", "1");
-      script.setAttribute("data-emit-metadata", "0");
-      script.setAttribute("data-input-position", "top");
-      script.setAttribute("data-theme", "light");
-      script.setAttribute("data-lang", "zh-CN");
-      container.appendChild(script);
-    };
-
-    // Check if GitHub Discussions is enabled on the repository
-    fetch(`https://api.github.com/repos/${repo}`, {
-      headers: { Accept: "application/vnd.github+json" },
-    })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data && data.has_discussions === false) {
-          if (hint) hint.hidden = false;
-        } else {
-          mountGiscus(categoryId);
-        }
-      })
-      .catch(() => {
-        mountGiscus(categoryId);
-      });
-  })();
-</script>
-
